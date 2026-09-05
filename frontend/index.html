@@ -9,6 +9,19 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        // Keep-alive ping — prevents Render free tier from sleeping
+        const BACKEND_URL = 'https://mock-test-backend-crqm.onrender.com';
+        function pingBackend() {
+            fetch(BACKEND_URL + '/api/progress/streak')
+                .then(() => console.log('[Keep-alive] Ping sent ✅'))
+                .catch(() => console.log('[Keep-alive] Ping failed — backend may be waking up'));
+        }
+        // Ping every 9 minutes (540000ms) — Render sleeps after 15 min
+        setInterval(pingBackend, 540000);
+        // First ping on page load
+        pingBackend();
+    </script>
 </head>
 <body>
     <!-- Top Navigation Bar (Option 1 Modern Header) -->

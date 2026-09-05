@@ -9,7 +9,7 @@ from typing import List
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from sqlalchemy import distinct
+from sqlalchemy import distinct, text
 from sqlalchemy.orm import Session
 
 from file_extractor import extract_text_from_file
@@ -52,6 +52,22 @@ app.add_middleware(
 )
 
 ALLOWED_EXTENSIONS = (".pdf", ".docx")
+
+
+@app.get("/health")
+def health_check(db: Session = Depends(get_db)):
+    import os
+    db_type = "PostgreSQL (Supabase)" if os.environ.get("DATABASE_URL") else "SQLite (local)"
+    try:
+        db.execute(text("SELECT 1"))
+        db_status = "connected ✅"
+    except Exception as e:
+        db_status = f"error ❌ — {e}"
+    return {
+        "status": "ok",
+        "database": db_type,
+        "db_connection": db_status
+    }
 
 
 @app.post("/api/process-pdf")

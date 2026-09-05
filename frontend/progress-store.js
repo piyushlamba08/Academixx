@@ -1,5 +1,5 @@
 const ProgressStore = (() => {
-    const API_BASE = 'http://localhost:8000/api/progress';
+    const API_BASE = 'https://mock-test-backend-crqm.onrender.com/api/progress';
 
     async function saveTest(testData) {
         try {

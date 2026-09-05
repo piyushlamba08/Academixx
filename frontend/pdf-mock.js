@@ -92,7 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', selectedFile);
 
         try {
-            const response = await fetch('http://localhost:8000/api/process-pdf', {
+            const response = await fetch('https://mock-test-backend-crqm.onrender.com/api/process-pdf', {
                 method: 'POST',
                 body: formData
             });

@@ -2,8 +2,9 @@ import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.pool import NullPool
 
-# PostgreSQL via Supabase — set DATABASE_URL in Render environment variables
+# PostgreSQL via Supabase Session Pooler (IPv4 compatible) — set DATABASE_URL in Render
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 if not DATABASE_URL:
@@ -12,7 +13,8 @@ if not DATABASE_URL:
     DATABASE_URL = f"sqlite:///{DB_PATH}"
     engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 else:
-    engine = create_engine(DATABASE_URL)
+    # NullPool recommended for Supabase Supavisor pooler
+    engine = create_engine(DATABASE_URL, poolclass=NullPool)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()

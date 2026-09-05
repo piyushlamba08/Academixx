@@ -22,6 +22,7 @@ from schemas import (
 import practice_generator
 import models as db_models
 from database import Base, engine, get_db
+import extractor_utils
 
 load_dotenv()
 
@@ -103,7 +104,7 @@ async def process_file(file: UploadFile = File(...)):
             print(f"[API] STEP 2/2 DONE ✅ — {len(final_mock.get('questions', []))} questions")
         except Exception as e:
             print(f"[API] ❌ STEP 2/2 FAILED (pipeline) — {type(e).__name__}: {e}")
-            raise HTTPException(status_code=500, detail=f"Pipeline failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=str(e))
 
         valid_questions = []
         invalid_answers = {"", "undefined", "null", "none", "n/a", "na"}
@@ -129,6 +130,41 @@ async def process_file(file: UploadFile = File(...)):
     except Exception as e:
         print(f"[API] ❌ UNEXPECTED ERROR — {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+@app.post("/api/extract-shuffle-doc")
+async def extract_shuffle_doc(file: UploadFile = File(...)):
+    filename = file.filename.lower()
+
+    if not any(filename.endswith(ext) for ext in ALLOWED_EXTENSIONS):
+        raise HTTPException(status_code=400, detail="Only PDF and DOCX files are supported.")
+
+    print(f"[API Shuffle] Received file: {file.filename}")
+
+    try:
+        file_bytes = await file.read()
+        
+        if len(file_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="File too large — max 10MB supported.")
+
+        print("[API Shuffle] Extracting text from file...")
+        raw_text = extract_text_from_file(file_bytes, file.filename)
+        
+        print(f"[API Shuffle] Extracted {len(raw_text)} chars. Parsing questions...")
+        
+        # Use our new non-AI extraction utility
+        parsed_questions = extractor_utils.parse_raw_questions(raw_text)
+        
+        print(f"[API Shuffle] Found and shuffled {len(parsed_questions)} valid questions.")
+        
+        return {"questions": parsed_questions}
+        
+    except ValueError as e:
+        print(f"[API Shuffle] Extraction Error: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print(f"[API Shuffle] General Error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to process file: {str(e)}")
 
 
 # ──────────────────────────────────────────────────────────

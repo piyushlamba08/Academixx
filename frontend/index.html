@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academix — Smart Mock Test & Quant Mastery</title>
-    <link rel="stylesheet" href="style.css?v=3">
+    <link rel="stylesheet" href="style.css?v=4">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -337,6 +337,20 @@
                     <div class="drill-desc">Upload study materials or question banks to generate custom exams.</div>
                     <div class="drill-action-row">
                         <span>Upload & Generate</span>
+                        <i class="ph-bold ph-arrow-right"></i>
+                    </div>
+                </div>
+
+                <!-- Document Shuffle Drill -->
+                <div class="drill-card" data-cat="ai" onclick="QuizEngine.showScreen(document.getElementById('doc-shuffle-screen'))">
+                    <div class="drill-card-top">
+                        <div class="drill-icon" style="background: linear-gradient(135deg, #0ea5e9, #0369a1);"><i class="ph-bold ph-shuffle"></i></div>
+                        <span class="drill-badge-type" style="background: rgba(14,165,233,0.1); color:#0ea5e9;"><i class="ph-bold ph-file-doc"></i> No AI</span>
+                    </div>
+                    <div class="drill-title">Document Shuffle Drill</div>
+                    <div class="drill-desc">Upload your question paper — exact questions extracted & shuffled. No AI, no changes, just your original questions in a new order.</div>
+                    <div class="drill-action-row">
+                        <span>Upload & Shuffle</span>
                         <i class="ph-bold ph-arrow-right"></i>
                     </div>
                 </div>
@@ -677,6 +691,72 @@
         </div>
 
         <!-- ============================================================
+             Setup Screen: Document Shuffle Drill (No AI)
+             ============================================================ -->
+        <div id="doc-shuffle-screen" class="screen setup-container-card">
+            <div class="setup-header">
+                <span class="setup-kicker" style="background: rgba(14,165,233,0.1); color:#0ea5e9; border-color: rgba(14,165,233,0.25);">
+                    <i class="ph-bold ph-shuffle"></i> No-AI Document Drill
+                </span>
+                <h1>Document Shuffle Drill</h1>
+                <p class="subtitle">Your exact questions, shuffled and ready — zero AI modification, zero wait time</p>
+            </div>
+
+            <div id="doc-shuffle-error-msg" class="error-message"></div>
+
+            <div id="doc-shuffle-upload-container" class="file-upload-container" style="border-color: rgba(14,165,233,0.4);">
+                <div class="upload-icon" style="color: #0ea5e9;"><i class="ph-bold ph-file-doc"></i></div>
+                <div class="upload-prompt">Click or drag your PDF / DOCX question paper here</div>
+                <div class="upload-subtext">Questions must be in (a) (b) (c) (d) format &nbsp;·&nbsp; Max 10 MB</div>
+                <div id="doc-shuffle-file-name-container" style="display: none; align-items: center; justify-content: center; gap: 10px; margin-top: 0.75rem;">
+                    <span id="doc-shuffle-file-name" style="font-weight:600; color: var(--text-primary);"></span>
+                    <button id="doc-shuffle-remove-file-btn" title="Remove file" class="remove-btn">✕</button>
+                </div>
+                <input type="file" id="doc-shuffle-file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+            </div>
+
+            <div class="form-group row" style="align-items: flex-end; gap: 2rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1;">
+                    <label>Exam Duration</label>
+                    <div class="difficulty-modes" id="doc-shuffle-duration-group">
+                        <button type="button" class="mode-btn" data-val="15">15 Min</button>
+                        <button type="button" class="mode-btn active" data-val="20">20 Min</button>
+                        <button type="button" class="mode-btn" data-val="30">30 Min</button>
+                        <button type="button" class="mode-btn" data-val="45">45 Min</button>
+                    </div>
+                </div>
+                <div class="custom-checkbox-row" style="padding-bottom: 0.75rem;">
+                    <input type="checkbox" id="doc-shuffle-negative">
+                    <label for="doc-shuffle-negative">Negative marking (-0.25)</label>
+                </div>
+            </div>
+
+            <!-- Info strip -->
+            <div style="background: rgba(14,165,233,0.06); border: 1px solid rgba(14,165,233,0.2); border-radius: 12px; padding: 0.9rem 1.1rem; margin-bottom: 1.5rem; font-size: 0.85rem; color: var(--text-secondary); display: flex; align-items: flex-start; gap: 0.65rem;">
+                <i class="ph-fill ph-info" style="color:#0ea5e9; font-size: 1.1rem; flex-shrink:0; margin-top:1px;"></i>
+                <span>
+                    <strong style="color: var(--text-primary);">How it works:</strong>
+                    Questions with <code style="background:var(--bg-subtle);padding:1px 5px;border-radius:4px;">(a) (b) (c) (d)</code> format are extracted directly from your file.
+                    If "Ans / Answer" is present after an option, auto-scoring is enabled for that question. Otherwise the question is shown without scoring.
+                </span>
+            </div>
+
+            <div id="doc-shuffle-loading-state" class="loading-state">
+                <div class="spinner"></div>
+                <div style="color: var(--text-secondary); font-weight: 600;">Extracting & shuffling questions (No AI)…</div>
+            </div>
+
+            <div class="setup-actions-row">
+                <button class="secondary-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">
+                    <i class="ph-bold ph-arrow-left"></i> Back
+                </button>
+                <button id="doc-shuffle-start-btn" class="primary-btn" disabled style="background: linear-gradient(135deg, #0ea5e9, #0369a1); box-shadow: 0 4px 14px rgba(14,165,233,0.35);">
+                    <i class="ph-bold ph-shuffle"></i> Extract & Start Drill
+                </button>
+            </div>
+        </div>
+
+        <!-- ============================================================
              QUIZ SCREEN — PRESERVED DIGITAL ION / TCS ION EXAM LAYOUT
              DO NOT CHANGE CLASS NAMES OR STRUCTURE AS REQUESTED
              ============================================================ -->
@@ -954,6 +1034,7 @@
     <script src="quiz-engine.js"></script>
     <script src="random-math.js"></script>
     <script src="pdf-mock.js"></script>
+    <script src="doc-shuffle.js"></script>
     <script src="progress-dashboard.js"></script>
     <script src="calc-analytics.js"></script>
     <script>

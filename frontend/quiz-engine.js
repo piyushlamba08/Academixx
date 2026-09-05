@@ -367,6 +367,7 @@ const QuizEngine = {
         let correctCount = 0;
         let wrongCount = 0;
         let skippedCount = 0;
+        let scoredTotal = 0;
         const total = this.state.questions.length;
         
         if (this.els.reviewTableBody) this.els.reviewTableBody.innerHTML = '';
@@ -376,27 +377,36 @@ const QuizEngine = {
         let bestStreakThisTest = 0;
 
         this.state.questions.forEach((q, idx) => {
-            let isCorrect = false;
-            
-            isCorrect = this.answersMatch(q.userAnswer, q.correctAnswer);
+            // Doc Shuffle Drill can produce questions with no detected answer key.
+            // Per spec, such questions are shown but never scored — no correct/wrong/streak impact.
+            const hasAnswerKey = q.correctAnswer !== undefined && q.correctAnswer !== null && String(q.correctAnswer).trim() !== '';
+            q.isScored = hasAnswerKey;
 
-            q.isCorrect = isCorrect;
-            
-            if (isCorrect) {
-                score += 1;
-                correctCount++;
-                currentStreak += 1;
-                bestStreakThisTest = Math.max(bestStreakThisTest, currentStreak);
-            } else {
-                currentStreak = 0;
-                if (q.userAnswer) {
-                    wrongCount++;
-                    if (this.state.negativeMarking) score -= 0.25;
+            let isCorrect = false;
+
+            if (hasAnswerKey) {
+                scoredTotal++;
+                isCorrect = this.answersMatch(q.userAnswer, q.correctAnswer);
+                q.isCorrect = isCorrect;
+
+                if (isCorrect) {
+                    score += 1;
+                    correctCount++;
+                    currentStreak += 1;
+                    bestStreakThisTest = Math.max(bestStreakThisTest, currentStreak);
                 } else {
-                    skippedCount++;
+                    currentStreak = 0;
+                    if (q.userAnswer) {
+                        wrongCount++;
+                        if (this.state.negativeMarking) score -= 0.25;
+                    } else {
+                        skippedCount++;
+                    }
                 }
-                
+            } else {
+                q.isCorrect = false;
             }
+
             if (this.els.reviewTableBody) this.appendReviewRow(q, idx + 1);
         });
 
@@ -429,7 +439,7 @@ const QuizEngine = {
         if (statSkipped) statSkipped.textContent = skippedCount;
         if (statTime) statTime.textContent = timeString;
         
-        const accuracy = total > 0 ? Math.round((correctCount / total) * 100) : 0;
+        const accuracy = scoredTotal > 0 ? Math.round((correctCount / scoredTotal) * 100) : 0;
         if (statAccuracy) statAccuracy.textContent = `${accuracy}%`;
 
         const statStreak = document.getElementById('stat-streak');
@@ -452,12 +462,15 @@ const QuizEngine = {
         }
 
         if (this.state.testMeta?.trackProgress) {
+            // Only persist scored questions — unscored ones (no detected answer key)
+            // must not pollute the Mistake Notebook or skew saved totals.
+            const scoredQuestions = this.state.questions.filter(q => q.isScored !== false);
             this.state.savedTest = await ProgressStore.saveTest({
                 topic: this.state.testMeta.topic,
                 sourceName: this.state.testMeta.sourceName,
                 durationSeconds: Math.max(0, timeUsed),
                 score, correctCount, wrongCount, skippedCount,
-                questions: this.state.questions
+                questions: scoredQuestions
             });
         }
 
@@ -510,8 +523,9 @@ const QuizEngine = {
 
     appendReviewRow(q, number) {
         const tr = document.createElement('tr');
-        const result = q.isCorrect ? 'Correct' : (q.userAnswer ? 'Wrong' : 'Skipped');
-        const resultClass = q.isCorrect ? 'correct-answer' : (q.userAnswer ? 'wrong-answer' : 'skipped-answer');
+        const isScored = q.isScored !== false;
+        const result = !isScored ? 'Not Scored' : (q.isCorrect ? 'Correct' : (q.userAnswer ? 'Wrong' : 'Skipped'));
+        const resultClass = !isScored ? 'skipped-answer' : (q.isCorrect ? 'correct-answer' : (q.userAnswer ? 'wrong-answer' : 'skipped-answer'));
         const spent = q.timeSpentSeconds || 0;
         const time = `${Math.floor(spent / 60)}m ${spent % 60}s`;
         
@@ -525,14 +539,17 @@ const QuizEngine = {
             speedBadge = `<span class="speed-pill slow"><i class="ph-bold ph-warning"></i> Slow (${spent}s / &le;${target}s)</span>`;
         }
 
-        const trickBtn = `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-sparkle"></i> ⚡ Shortcut</button>`;
+        const correctAnswerDisplay = isScored ? this.formatMathText(q.correctAnswer) : '—';
+        const trickBtn = isScored
+            ? `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-sparkle"></i> ⚡ Shortcut</button>`
+            : '<span class="skipped-answer">—</span>';
 
         const cells = [
             `Q${number}: ${this.formatMathText(q.question)}`,
             `<span class="${resultClass}">${result}</span>`,
             time,
             speedBadge,
-            this.formatMathText(q.correctAnswer),
+            correctAnswerDisplay,
             trickBtn
         ];
 

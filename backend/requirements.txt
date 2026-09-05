@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+pdfplumber
+pypdf
+python-dotenv
+python-multipart
+python-docx
+langchain
+langchain-groq
+langchain-core
+langgraph
+groq
+sqlalchemy
+pydantic

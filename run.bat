@@ -1,0 +1,16 @@
+@echo off
+echo Starting backend server on port 8000...
+start cmd /k "cd backend && uvicorn main:app --reload"
+
+echo Starting frontend server on port 8080...
+start cmd /k "cd frontend && python -m http.server 8080"
+
+echo Both servers are starting...
+echo Backend API available at: http://localhost:8000
+echo Frontend UI available at: http://localhost:8080
+
+echo Waiting for servers to start...
+timeout /t 2 /nobreak >nul
+
+echo Opening browser...
+start http://localhost:8080

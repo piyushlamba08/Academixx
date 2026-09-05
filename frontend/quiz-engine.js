@@ -360,6 +360,11 @@ const QuizEngine = {
     },
 
     async submitQuiz() {
+        // Turant disable karo — double click prevent
+        if (this.els.submitTestBtn) this.els.submitTestBtn.disabled = true;
+        if (this.els.nextBtn) this.els.nextBtn.disabled = true;
+        if (this.els.backBtn) this.els.backBtn.disabled = true;
+
         if (this.state.timerInterval) clearInterval(this.state.timerInterval);
         this.captureQuestionTime(this.state.questions[this.state.currentIndex]);
         
@@ -462,16 +467,15 @@ const QuizEngine = {
         }
 
         if (this.state.testMeta?.trackProgress) {
-            // Only persist scored questions — unscored ones (no detected answer key)
-            // must not pollute the Mistake Notebook or skew saved totals.
             const scoredQuestions = this.state.questions.filter(q => q.isScored !== false);
-            this.state.savedTest = await ProgressStore.saveTest({
+            // await nahi — background mein save hoga, UI block nahi hogi
+            ProgressStore.saveTest({
                 topic: this.state.testMeta.topic,
                 sourceName: this.state.testMeta.sourceName,
                 durationSeconds: Math.max(0, timeUsed),
                 score, correctCount, wrongCount, skippedCount,
                 questions: scoredQuestions
-            });
+            }).then(saved => { this.state.savedTest = saved; }).catch(() => {});
         }
 
         this.showScreen(this.els.resultScreen);

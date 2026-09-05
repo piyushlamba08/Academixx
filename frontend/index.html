@@ -27,13 +27,17 @@
     <!-- Top Navigation Bar (Option 1 Modern Header) -->
     <header class="app-header">
         <div class="header-inner">
+            <!-- Mobile Hamburger Button -->
+            <button id="mobile-menu-btn" class="mobile-menu-toggle-btn" aria-label="Open Navigation Menu">
+                <i class="ph-bold ph-list"></i>
+            </button>
+
             <div class="header-brand" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
                 <div class="brand-logo-icon">
                     <i class="ph-fill ph-lightning"></i>
                 </div>
                 <div class="brand-text-wrap">
                     <span class="brand-name">Academix</span>
-                    <span class="brand-badge">Quant Pro</span>
                 </div>
             </div>
 
@@ -60,20 +64,45 @@
                     <i class="ph ph-magnifying-glass"></i>
                     <input type="text" id="global-search-input" placeholder="Search tests, topics..." onkeyup="filterDrills(this.value)">
                 </div>
-
-                <div class="user-profile-pill">
-                    <div class="user-avatar">
-                        <i class="ph-fill ph-user"></i>
-                    </div>
-                    <span class="user-name">Candidate</span>
-                </div>
-
                 <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
                     <i class="ph-fill ph-moon"></i>
                 </button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Drawer Navigation Overlay & Panel -->
+    <div id="mobile-drawer-overlay" class="mobile-drawer-overlay"></div>
+    <aside id="mobile-drawer" class="mobile-drawer">
+        <div class="mobile-drawer-header">
+            <span class="drawer-brand-name">Academix</span>
+            <button id="mobile-drawer-close" class="mobile-drawer-close-btn" aria-label="Close Navigation Menu">
+                <i class="ph-bold ph-x"></i>
+            </button>
+        </div>
+        <nav class="mobile-drawer-nav">
+            <button class="mobile-nav-link active" data-tab="home" onclick="closeMobileDrawer(); QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
+                <i class="ph-bold ph-house"></i>
+                <span>Home</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="catalog" onclick="closeMobileDrawer(); QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('catalog'); document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'});">
+                <i class="ph-bold ph-grid-four"></i>
+                <span>Test Catalog</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="notebook" onclick="closeMobileDrawer(); ProgressDashboard.openNotebook();">
+                <i class="ph-bold ph-notebook"></i>
+                <span>Mistake Notebook</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="analytics" onclick="closeMobileDrawer(); ProgressDashboard.open();">
+                <i class="ph-bold ph-chart-line-up"></i>
+                <span>Stats & Analytics</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="calc-analytics" onclick="closeMobileDrawer(); CalcAnalytics.open();">
+                <i class="ph-bold ph-speedometer"></i>
+                <span>Calc Speed</span>
+            </button>
+        </nav>
+    </aside>
 
     <div class="app-container">
         
@@ -84,12 +113,12 @@
             <div class="welcome-banner-card">
                 <div class="welcome-left">
                     <span class="welcome-badge"><i class="ph-fill ph-sparkle"></i> AI-Powered Quant Practice</span>
-                    <h1>Welcome Back, Candidate!</h1>
-                    <p class="welcome-subtitle">Timed reps on speed math, AI mocks generated from your own PDFs, and a mistake notebook that pinpoints your weak spots.</p>
+                    <h1>Welcome Back !</h1>
+                    <p class="welcome-subtitle">Rapid math drills, custom AI mocks from your files, and precision tracking for every mistake.</p>
                 </div>
                 <div class="welcome-quick-actions">
                     <button class="hero-primary-btn" onclick="document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'})">
-                        <i class="ph-bold ph-play"></i> Start New Drill
+                        <i class="ph-bold ph-play"></i> New Drill
                     </button>
                     <button class="hero-secondary-btn" onclick="ProgressDashboard.openNotebook()">
                         <i class="ph-bold ph-notebook"></i> Review Mistakes
@@ -103,13 +132,16 @@
                 <div class="overview-card card-upcoming">
                     <div class="overview-card-head">
                         <span class="card-head-title">Prep Overview</span>
-                        <div class="dots-icon"><i class="ph-bold ph-dots-three-vertical"></i></div>
                     </div>
                     <div class="overview-card-body">
                         <div class="prep-ring-wrap">
+                            <svg class="prep-ring-svg" viewBox="0 0 84 84">
+                                <circle class="prep-ring-bg-track" cx="42" cy="42" r="35" />
+                                <circle class="prep-ring-fill-bar" id="overview-acc-bar" cx="42" cy="42" r="35" />
+                            </svg>
                             <div class="prep-ring-label">
-                                <span id="overview-acc-ring">78%</span>
-                                <small>Accuracy</small>
+                                <span id="overview-acc-ring">0%</span>
+                                <small>ACCURACY</small>
                             </div>
                         </div>
                         <div class="prep-info">
@@ -117,7 +149,7 @@
                             <p id="overview-prep-subtitle">Drill weak topics in your notebook to boost your score.</p>
                         </div>
                     </div>
-                    <button class="card-action-btn" onclick="ProgressDashboard.openNotebook()">
+                    <button class="card-action-btn resume-mistake-pill" onclick="ProgressDashboard.openNotebook()">
                         <i class="ph-bold ph-arrows-clockwise"></i> Resume Mistake Drill
                     </button>
                 </div>
@@ -131,23 +163,31 @@
                     <div class="quick-drills-grid">
                         <button class="quick-pill-card pill-math" onclick="selectOperation('addition')">
                             <div class="quick-icon"><i class="ph-bold ph-plus"></i></div>
-                            <span>Addition</span>
-                            <small>2-Digit</small>
+                            <div class="quick-text-meta">
+                                <span>Addition</span>
+                                <small>2-Digit</small>
+                            </div>
                         </button>
                         <button class="quick-pill-card pill-tables" onclick="selectOperation('tables')">
                             <div class="quick-icon"><i class="ph-bold ph-grid-nine"></i></div>
-                            <span>Tables</span>
-                            <small>2 to 12</small>
+                            <div class="quick-text-meta">
+                                <span>Tables</span>
+                                <small>2 to 12</small>
+                            </div>
                         </button>
                         <button class="quick-pill-card pill-squares" onclick="selectOperation('square')">
                             <div class="quick-icon"><i class="ph-bold ph-square"></i></div>
-                            <span>Squares</span>
-                            <small>1-50</small>
+                            <div class="quick-text-meta">
+                                <span>Squares</span>
+                                <small>1-50</small>
+                            </div>
                         </button>
                         <button class="quick-pill-card pill-pdf" onclick="QuizEngine.showScreen(document.getElementById('pdf-screen'))">
                             <div class="quick-icon"><i class="ph-fill ph-file-pdf"></i></div>
-                            <span>AI Mock</span>
-                            <small>Custom PDF</small>
+                            <div class="quick-text-meta">
+                                <span>AI Mock</span>
+                                <small>Custom PDF</small>
+                            </div>
                         </button>
                     </div>
                     <div class="quick-footer-hint">
@@ -189,14 +229,14 @@
             <div id="catalog-section" class="catalog-header-wrap">
                 <div class="catalog-titles">
                     <h2>Test Catalog & Speed Drills</h2>
-                    <p>Select any category below to customize parameters and start your practice test.</p>
+                    <p>Select any category below and start practice.</p>
                 </div>
                 <div class="catalog-filter-tabs">
                     <button class="cat-filter-btn active" onclick="filterCatalog('all', this)">All</button>
-                    <button class="cat-filter-btn" onclick="filterCatalog('arithmetic', this)">Arithmetic</button>
-                    <button class="cat-filter-btn" onclick="filterCatalog('powers', this)">Powers & Roots</button>
+                    <button class="cat-filter-btn" onclick="filterCatalog('arithmetic', this)">Math</button>
+                    <button class="cat-filter-btn" onclick="filterCatalog('powers', this)">Powers</button>
                     <button class="cat-filter-btn" onclick="filterCatalog('tables', this)">Tables</button>
-                    <button class="cat-filter-btn" onclick="filterCatalog('ai', this)">AI Mocks</button>
+                    <button class="cat-filter-btn" onclick="filterCatalog('ai', this)">AI</button>
                 </div>
             </div>
 
@@ -291,7 +331,7 @@
                         <div class="drill-icon" style="background: linear-gradient(135deg, #06b6d4, #0e7490);"><i class="ph-bold ph-radical"></i></div>
                         <span class="drill-badge-type">Roots</span>
                     </div>
-                    <div class="drill-title">Square Roots</div>
+                    <div class="drill-title">Roots</div>
                     <div class="drill-desc">Perfect square roots identification & rapid estimation.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
@@ -305,7 +345,7 @@
                         <div class="drill-icon" style="background: linear-gradient(135deg, #6366f1, #4338ca);"><i class="ph-bold ph-grid-nine"></i></div>
                         <span class="drill-badge-type">Tables</span>
                     </div>
-                    <div class="drill-title">Multiplication Tables</div>
+                    <div class="drill-title">Tables</div>
                     <div class="drill-desc">Custom table range drills (2 to 30) for sharp mental arithmetic.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
@@ -319,7 +359,7 @@
                         <div class="drill-icon" style="background: linear-gradient(135deg, #64748b, #334155);"><i class="ph-bold ph-shuffle"></i></div>
                         <span class="drill-badge-type">Mixed</span>
                     </div>
-                    <div class="drill-title">Mixed Arithmetic</div>
+                    <div class="drill-title">Mixed</div>
                     <div class="drill-desc">BODMAS equations, multi-operator questions & speed drills.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
@@ -333,7 +373,7 @@
                         <div class="drill-icon" style="background: linear-gradient(135deg, #ec4899, #be185d);"><i class="ph-fill ph-file-pdf"></i></div>
                         <span class="drill-badge-type is-ai"><i class="ph-fill ph-sparkle"></i> AI Mock</span>
                     </div>
-                    <div class="drill-title">PDF Mock Test</div>
+                    <div class="drill-title">PDF Mock</div>
                     <div class="drill-desc">Upload study materials or question banks to generate custom exams.</div>
                     <div class="drill-action-row">
                         <span>Upload & Generate</span>
@@ -347,7 +387,7 @@
                         <div class="drill-icon" style="background: linear-gradient(135deg, #0ea5e9, #0369a1);"><i class="ph-bold ph-shuffle"></i></div>
                         <span class="drill-badge-type" style="background: rgba(14,165,233,0.1); color:#0ea5e9;"><i class="ph-bold ph-file-doc"></i> No AI</span>
                     </div>
-                    <div class="drill-title">Document Shuffle Drill</div>
+                    <div class="drill-title">Shuffle Drill</div>
                     <div class="drill-desc">Upload your question paper — exact questions extracted & shuffled. No AI, no changes, just your original questions in a new order.</div>
                     <div class="drill-action-row">
                         <span>Upload & Shuffle</span>
@@ -394,7 +434,7 @@
                     <p class="subtitle">Complete breakdown of all tests completed and persisted in your local SQLite database.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Home
+                    <i class="ph-bold ph-arrow-left"></i> Home
                 </button>
             </div>
 
@@ -481,7 +521,7 @@
                     <p class="subtitle">Every question you got wrong or skipped is organized here. Master your weak spots through focused retests.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Home
+                    <i class="ph-bold ph-arrow-left"></i> Home
                 </button>
             </div>
 
@@ -531,21 +571,21 @@
                 <div class="col" id="setting-complexity">
                     <label>Digit Complexity</label>
                     <div class="difficulty-modes">
-                        <button type="button" class="mode-btn" data-mode="1">1 Digit</button>
-                        <button type="button" class="mode-btn active" data-mode="2">2 Digits</button>
-                        <button type="button" class="mode-btn" data-mode="3">3 Digits</button>
-                        <button type="button" class="mode-btn" data-mode="4">4 Digits</button>
-                        <button type="button" class="mode-btn" data-mode="5">5 Digits</button>
+                        <button type="button" class="mode-btn" data-mode="1">1</button>
+                        <button type="button" class="mode-btn active" data-mode="2">2</button>
+                        <button type="button" class="mode-btn" data-mode="3">3</button>
+                        <button type="button" class="mode-btn" data-mode="4">4</button>
+                        <button type="button" class="mode-btn" data-mode="5">5</button>
                     </div>
                 </div>
 
                 <div class="col" id="setting-terms">
                     <label>Number of Terms</label>
                     <div class="difficulty-modes" id="math-terms-group">
-                        <button type="button" class="mode-btn active" data-val="2">2 Terms</button>
-                        <button type="button" class="mode-btn" data-val="3">3 Terms</button>
-                        <button type="button" class="mode-btn" data-val="4">4 Terms</button>
-                        <button type="button" class="mode-btn" data-val="5">5 Terms</button>
+                        <button type="button" class="mode-btn active" data-val="2">2</button>
+                        <button type="button" class="mode-btn" data-val="3">3</button>
+                        <button type="button" class="mode-btn" data-val="4">4</button>
+                        <button type="button" class="mode-btn" data-val="5">5</button>
                     </div>
                 </div>
             </div>
@@ -589,24 +629,31 @@
                 </div>
             </div>
 
-            <div class="form-group row" style="align-items: center; justify-content: space-between;">
-                <div class="col" id="setting-input-mode" style="flex: 1.2;">
+            <div class="form-group row" style="align-items: flex-start; justify-content: space-between;">
+                <div class="col" id="setting-input-mode" style="flex: 1;">
                     <label>Answering Format</label>
                     <div class="difficulty-modes" style="margin-bottom: 0;">
-                        <button type="button" class="input-mode-btn active" data-imode="mcq"><i class="ph-bold ph-list-dashes"></i> MCQ (Options)</button>
-                        <button type="button" class="input-mode-btn" data-imode="manual"><i class="ph-bold ph-keyboard"></i> Keypad Input</button>
+                        <button type="button" class="input-mode-btn active" data-imode="mcq"><i class="ph-bold ph-list-dashes"></i> MCQ</button>
+                        <button type="button" class="input-mode-btn" data-imode="manual"><i class="ph-bold ph-keyboard"></i> Manual</button>
                     </div>
                 </div>
 
-                <div class="col" style="flex: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 15px;">
-                    <div id="setting-decimals" class="custom-checkbox-row">
-                        <input type="checkbox" id="math-decimals">
-                        <label for="math-decimals">Allow decimal values</label>
-                    </div>
-                    
-                    <div class="custom-checkbox-row">
-                        <input type="checkbox" id="math-negative" checked>
-                        <label for="math-negative">Enable negative marking (-0.25)</label>
+                <div class="col" style="flex: 1;">
+                    <label>Test Rules</label>
+                    <div class="setting-chips-group">
+                        <label id="setting-decimals" class="setting-chip-pill">
+                            <input type="checkbox" id="math-decimals" style="display: none;">
+                            <span class="chip-inner">
+                                <i class="ph-bold ph-currency-circle-dollar"></i> Decimal
+                            </span>
+                        </label>
+                        
+                        <label class="setting-chip-pill">
+                            <input type="checkbox" id="math-negative" checked style="display: none;">
+                            <span class="chip-inner">
+                                <i class="ph-bold ph-minus-circle"></i> Negative (-0.25)
+                            </span>
+                        </label>
                     </div>
                 </div>
             </div>
@@ -616,7 +663,7 @@
                     <i class="ph-bold ph-arrow-left"></i> Back
                 </button>
                 <button id="start-math-btn" class="primary-btn">
-                    <i class="ph-bold ph-play"></i> Start Examination
+                    <i class="ph-bold ph-play"></i> Start
                 </button>
             </div>
         </div>
@@ -642,8 +689,8 @@
                 <input type="file" id="pdf-file" accept="application/pdf">
             </div>
 
-            <div class="form-group row" style="align-items: flex-end; justify-content: flex-start; gap: 2rem; margin-bottom: 1.5rem;">
-                <div style="flex: 1;">
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="col" style="flex: 1.2;">
                     <label for="pdf-topic">Quantitative Topic</label>
                     <select id="pdf-topic" class="modern-select">
                         <option value="Percentage">Percentage</option>
@@ -661,17 +708,24 @@
                         <option value="Other">Other</option>
                     </select>
                 </div>
-                <div style="flex: 1;">
-                    <label for="pdf-duration">Exam Duration</label>
-                    <div class="difficulty-modes" id="pdf-duration-group">
+                <div class="col" style="flex: 1;">
+                    <label>Exam Duration</label>
+                    <div class="difficulty-modes" id="pdf-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn active" data-val="15">15 Min</button>
                         <button type="button" class="mode-btn" data-val="20">20 Min</button>
                     </div>
                 </div>
                 
-                <div class="custom-checkbox-row" style="padding-bottom: 0.75rem;">
-                    <input type="checkbox" id="pdf-negative" checked>
-                    <label for="pdf-negative">Negative marking (-0.25)</label>
+                <div class="col" style="flex: 1;">
+                    <label>Test Rules</label>
+                    <div class="setting-chips-group">
+                        <label class="setting-chip-pill" style="width: 100%;">
+                            <input type="checkbox" id="pdf-negative" checked style="display: none;">
+                            <span class="chip-inner">
+                                <i class="ph-bold ph-minus-circle"></i> Negative (-0.25)
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -715,19 +769,26 @@
                 <input type="file" id="doc-shuffle-file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
 
-            <div class="form-group row" style="align-items: flex-end; gap: 2rem; margin-bottom: 1.5rem;">
-                <div style="flex: 1;">
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="col" style="flex: 1.5;">
                     <label>Exam Duration</label>
-                    <div class="difficulty-modes" id="doc-shuffle-duration-group">
+                    <div class="difficulty-modes" id="doc-shuffle-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn" data-val="15">15 Min</button>
                         <button type="button" class="mode-btn active" data-val="20">20 Min</button>
                         <button type="button" class="mode-btn" data-val="30">30 Min</button>
                         <button type="button" class="mode-btn" data-val="45">45 Min</button>
                     </div>
                 </div>
-                <div class="custom-checkbox-row" style="padding-bottom: 0.75rem;">
-                    <input type="checkbox" id="doc-shuffle-negative">
-                    <label for="doc-shuffle-negative">Negative marking (-0.25)</label>
+                <div class="col" style="flex: 1;">
+                    <label>Test Rules</label>
+                    <div class="setting-chips-group">
+                        <label class="setting-chip-pill" style="width: 100%;">
+                            <input type="checkbox" id="doc-shuffle-negative" style="display: none;">
+                            <span class="chip-inner">
+                                <i class="ph-bold ph-minus-circle"></i> Negative (-0.25)
+                            </span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -757,26 +818,37 @@
         </div>
 
         <!-- ============================================================
-             QUIZ SCREEN — PRESERVED DIGITAL ION / TCS ION EXAM LAYOUT
-             DO NOT CHANGE CLASS NAMES OR STRUCTURE AS REQUESTED
+             QUIZ SCREEN — CLEAN CENTERED EXAM WITH TOP RIBBON & GRID MODAL
              ============================================================ -->
         <div id="quiz-screen" class="screen exam-layout">
             <!-- Header -->
             <div class="exam-header">
                 <div class="exam-title">Mock Test Examination</div>
                 <div class="exam-timer">
-                    <span style="margin-right: 10px; font-weight: 600; font-size: 0.9rem;">Time Left:</span>
+                    <span class="timer-label">Time Left:</span>
                     <span id="timer-text" class="timer-badge">00:00</span>
-                    <button id="exit-quiz-btn" class="pill-btn danger-text" style="margin-left: 1rem;">End Test</button>
+                    <button id="exit-quiz-btn" class="pill-btn danger-text">Exit</button>
                 </div>
             </div>
             
             <!-- Body -->
             <div class="exam-body">
-                <!-- Left Pane: Question Area -->
+                <!-- Main Centered Question Area -->
                 <div class="exam-left-pane">
-                    <div class="question-header">
-                        <span id="question-number-badge">Question No. 1</span>
+                    <!-- Top Horizontal Question Strip (Previous 2, Current, Next 2) -->
+                    <div class="exam-question-ribbon-wrap">
+                        <div class="question-header">
+                            <span id="question-number-badge">Question No. 1</span>
+                            <div class="question-header-right">
+                                <span id="question-count-badge" class="question-progress-count"></span>
+                                <button id="ribbon-palette-btn" class="exam-icon-btn" title="Open Question Palette Grid" aria-label="Question Grid">
+                                    <i class="ph-bold ph-squares-four"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="exam-question-ribbon" class="exam-question-ribbon">
+                            <!-- Injected dynamically via QuizEngine -->
+                        </div>
                     </div>
                     
                     <div class="question-container modern-question">
@@ -792,9 +864,18 @@
                         <input type="text" id="manual-answer-input" placeholder="Enter your answer" class="modern-input">
                     </div>
                 </div>
-                
-                <!-- Right Pane: Palette Area -->
-                <div class="exam-right-pane">
+            </div>
+            
+            <!-- Question Palette Modal / Drawer Overlay -->
+            <div id="palette-modal-overlay" class="palette-modal-overlay">
+                <div class="palette-modal-content">
+                    <div class="palette-modal-header">
+                        <div class="palette-modal-title">
+                            <i class="ph-bold ph-squares-four"></i> Question Palette
+                        </div>
+                        <button id="close-palette-btn" class="palette-modal-close" title="Close Grid">✕</button>
+                    </div>
+
                     <div class="palette-legend">
                         <div class="legend-row">
                             <div class="legend-item"><span class="badge answered"></span> Answered</div>
@@ -809,12 +890,8 @@
                         </div>
                     </div>
                     
-                    <div class="palette-header">
-                        <div class="palette-title">Question Palette</div>
-                    </div>
-                    
                     <div id="question-palette-grid" class="palette-grid">
-                        <!-- Buttons injected dynamically -->
+                        <!-- Buttons injected dynamically via QuizEngine -->
                     </div>
                 </div>
             </div>
@@ -930,7 +1007,7 @@
                     <p class="subtitle">Per-topic speed, accuracy & slow/fast breakdown for every calculation drill you've completed.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
-                    <i class="ph-bold ph-arrow-left"></i> Back to Home
+                    <i class="ph-bold ph-arrow-left"></i> Home
                 </button>
             </div>
 
@@ -1089,6 +1166,32 @@
             });
         }
 
+        // Mobile Drawer Navigation Logic
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const mobileDrawer = document.getElementById('mobile-drawer');
+        const mobileDrawerOverlay = document.getElementById('mobile-drawer-overlay');
+        const mobileDrawerClose = document.getElementById('mobile-drawer-close');
+
+        function openMobileDrawer() {
+            if (mobileDrawer && mobileDrawerOverlay) {
+                mobileDrawer.classList.add('open');
+                mobileDrawerOverlay.classList.add('open');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeMobileDrawer() {
+            if (mobileDrawer && mobileDrawerOverlay) {
+                mobileDrawer.classList.remove('open');
+                mobileDrawerOverlay.classList.remove('open');
+                document.body.style.overflow = '';
+            }
+        }
+
+        if (mobileMenuBtn) mobileMenuBtn.addEventListener('click', openMobileDrawer);
+        if (mobileDrawerClose) mobileDrawerClose.addEventListener('click', closeMobileDrawer);
+        if (mobileDrawerOverlay) mobileDrawerOverlay.addEventListener('click', closeMobileDrawer);
+
         // Home screen scoreboard — pulls live numbers from ProgressStore (SQLite backend)
         async function refreshHomeStats() {
             if (typeof ProgressStore === 'undefined') return;
@@ -1098,17 +1201,27 @@
             const streakEl = document.getElementById('home-stat-streak');
             const mistakesEl = document.getElementById('home-stat-mistakes');
             const ringEl = document.getElementById('overview-acc-ring');
+            const barEl = document.getElementById('overview-acc-bar');
 
             if (testsEl) testsEl.textContent = tests.length;
 
+            let accuracyPct = 0;
             let accuracyText = '--';
             if (tests.length) {
                 const totals = tests.reduce((a, t) => ({ correct: a.correct + t.correctCount, total: a.total + t.total }), { correct: 0, total: 0 });
                 if (totals.total) {
-                    const acc = Math.round((totals.correct / totals.total) * 100);
-                    accuracyText = `${acc}%`;
-                    if (ringEl) ringEl.textContent = `${acc}%`;
+                    accuracyPct = Math.round((totals.correct / totals.total) * 100);
+                    accuracyText = `${accuracyPct}%`;
                 }
+            }
+            
+            if (ringEl) ringEl.textContent = `${accuracyPct}%`;
+            if (barEl) {
+                // Circumference for r=35 is 2 * PI * 35 ≈ 219.91
+                const circumference = 219.91;
+                barEl.style.strokeDasharray = `${circumference}`;
+                const offset = circumference - (accuracyPct / 100) * circumference;
+                barEl.style.strokeDashoffset = `${offset}`;
             }
             if (accEl) accEl.textContent = accuracyText;
 

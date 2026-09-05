@@ -5,7 +5,7 @@ const ProgressDashboard = (() => {
     const formatTime = (seconds) => `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 
     function updateNavActive(activeTab) {
-        document.querySelectorAll('.app-nav-link').forEach(link => {
+        document.querySelectorAll('.app-nav-link, .mobile-nav-link').forEach(link => {
             if (link.dataset.tab === activeTab) {
                 link.classList.add('active');
             } else {
@@ -16,8 +16,20 @@ const ProgressDashboard = (() => {
 
     async function open() {
         updateNavActive('analytics');
-        await renderDashboard();
         QuizEngine.showScreen(byId('dashboard-screen'));
+        await renderDashboard();
+    }
+
+    async function openNotebook() {
+        updateNavActive('notebook');
+        QuizEngine.showScreen(byId('notebook-screen'));
+        const select = byId('notebook-topic');
+        const current = select.value || 'all';
+        renderNotebook();
+        ProgressStore.getTopics().then(topics => {
+            select.innerHTML = '<option value="all">All topics</option>' + topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+            select.value = [...select.options].some(x => x.value === current) ? current : 'all';
+        }).catch(() => {});
     }
 
     async function renderDashboard() {
@@ -121,21 +133,23 @@ const ProgressDashboard = (() => {
         QuizEngine.showStoredResult(test);
     }
 
-    async function openNotebook() {
-        updateNavActive('notebook');
-        const select = byId('notebook-topic');
-        const current = select.value || 'all';
-        const topics = await ProgressStore.getTopics();
-        select.innerHTML = '<option value="all">All topics</option>' + topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-        select.value = [...select.options].some(x => x.value === current) ? current : 'all';
-        await renderNotebook();
-        QuizEngine.showScreen(byId('notebook-screen'));
-    }
-
     async function renderNotebook() {
+        const listEl = byId('notebook-list');
+        const emptyEl = byId('notebook-empty');
+        
+        // Show shimmer skeleton while loading
+        if (listEl && listEl.children.length === 0) {
+            emptyEl.style.display = 'none';
+            listEl.innerHTML = `
+                <div class="skeleton-mistake-card"><div class="skeleton-shimmer"></div></div>
+                <div class="skeleton-mistake-card"><div class="skeleton-shimmer"></div></div>
+                <div class="skeleton-mistake-card"><div class="skeleton-shimmer"></div></div>
+            `;
+        }
+
         const mistakes = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
-        byId('notebook-empty').style.display = mistakes.length ? 'none' : 'block';
-        byId('notebook-list').innerHTML = mistakes.map((q, i) => {
+        emptyEl.style.display = mistakes.length ? 'none' : 'block';
+        listEl.innerHTML = mistakes.map((q, i) => {
             const isHighPriority = q.timesWrong >= 2;
             const priorityBadge = isHighPriority ? '<span class="mistake-badge priority-high">High Priority</span>' : '<span class="mistake-badge priority-mid">Review Needed</span>';
             const topicLabel = q.topic ? `#${q.topic}` : '#Practice';
@@ -150,7 +164,7 @@ const ProgressDashboard = (() => {
                     </div>
                     <div class="mistake-top-actions">
                         <button class="ai-trick-btn" onclick="ProgressDashboard.showAiTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}', '${encodeURIComponent(q.topic || '')}')">
-                            <i class="ph-fill ph-sparkle"></i> ⚡ Shortcut Trick
+                            <i class="ph-fill ph-lightning"></i> Trick
                         </button>
                         <button class="practice-pill-btn" onclick="ProgressDashboard.practiceSingleMistake('${encodeURIComponent(q.key)}')">
                             <i class="ph-bold ph-arrows-clockwise"></i> Practice

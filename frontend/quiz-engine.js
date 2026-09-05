@@ -34,6 +34,8 @@ const QuizEngine = {
         confirmYesBtn: document.getElementById('confirm-yes-btn'),
 
         questionPaletteGrid: document.getElementById('question-palette-grid'),
+        questionRibbon: document.getElementById('exam-question-ribbon'),
+        questionCountBadge: document.getElementById('question-count-badge'),
 
         scoreText: document.getElementById('score-text'),
         reviewTableBody: document.getElementById('review-table-body'),
@@ -57,6 +59,7 @@ const QuizEngine = {
                 const q = this.state.questions[this.state.currentIndex];
                 q.userAnswer = e.target.value.trim();
                 this.renderPalette();
+                this.renderQuestionRibbon();
             });
         }
 
@@ -79,7 +82,43 @@ const QuizEngine = {
             }
         });
         
-        this.els.restartBtn.addEventListener('click', () => this.handleRestart());
+        if (this.els.restartBtn) {
+            this.els.restartBtn.addEventListener('click', () => this.handleRestart());
+        }
+
+        // ── Palette Grid Modal / Sheet Handlers ──
+        const openPaletteBtn = document.getElementById('open-palette-btn');
+        const ribbonPaletteBtn = document.getElementById('ribbon-palette-btn');
+        const closePaletteBtn = document.getElementById('close-palette-btn');
+        const paletteModalOverlay = document.getElementById('palette-modal-overlay');
+
+        const openPalette = () => {
+            if (paletteModalOverlay) {
+                this.renderPalette();
+                paletteModalOverlay.classList.add('active');
+            }
+        };
+
+        const closePalette = () => {
+            if (paletteModalOverlay) {
+                paletteModalOverlay.classList.remove('active');
+            }
+        };
+
+        if (openPaletteBtn) openPaletteBtn.addEventListener('click', openPalette);
+        if (ribbonPaletteBtn) ribbonPaletteBtn.addEventListener('click', openPalette);
+        if (closePaletteBtn) closePaletteBtn.addEventListener('click', closePalette);
+        if (paletteModalOverlay) {
+            paletteModalOverlay.addEventListener('click', (e) => {
+                if (e.target === paletteModalOverlay) closePalette();
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && paletteModalOverlay && paletteModalOverlay.classList.contains('active')) {
+                closePalette();
+            }
+        });
         
         if (this.els.exitQuizBtn) {
             this.els.exitQuizBtn.addEventListener('click', () => {
@@ -291,6 +330,88 @@ const QuizEngine = {
         }
         
         this.renderPalette();
+        this.renderQuestionRibbon();
+    },
+
+    renderQuestionRibbon() {
+        if (!this.els.questionRibbon) return;
+        const total = this.state.questions.length;
+        const currentIdx = this.state.currentIndex;
+        
+        if (this.els.questionCountBadge) {
+            this.els.questionCountBadge.textContent = `${currentIdx + 1} of ${total}`;
+        }
+
+        this.els.questionRibbon.innerHTML = '';
+
+        // Calculate window: previous 2, current, next 2
+        const start = Math.max(0, currentIdx - 2);
+        const end = Math.min(total - 1, currentIdx + 2);
+
+        // Previous jump indicator if not at start
+        if (start > 0) {
+            const firstPill = document.createElement('button');
+            firstPill.type = 'button';
+            firstPill.className = 'ribbon-pill ribbon-jump';
+            firstPill.title = 'Go to Question 1';
+            firstPill.innerHTML = '<i class="ph-bold ph-caret-double-left"></i> 1';
+            firstPill.onclick = () => this.visitQuestion(0);
+            this.els.questionRibbon.appendChild(firstPill);
+
+            if (start > 1) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'ribbon-ellipsis';
+                ellipsis.textContent = '···';
+                this.els.questionRibbon.appendChild(ellipsis);
+            }
+        }
+
+        for (let i = start; i <= end; i++) {
+            const q = this.state.questions[i];
+            let status = q.status;
+            if (i === currentIdx) {
+                if (q.userAnswer) {
+                    if (q.status !== 'marked' && q.status !== 'answered_marked') status = 'answered';
+                    else if (q.status === 'marked') status = 'answered_marked';
+                } else {
+                    if (q.status !== 'marked' && q.status !== 'answered_marked') status = 'not_answered';
+                }
+            }
+
+            const pill = document.createElement('button');
+            pill.type = 'button';
+            pill.className = `ribbon-pill ${status.replace('_', '-')}`;
+            if (i === currentIdx) {
+                pill.classList.add('current');
+            }
+
+            pill.innerHTML = `<span class="pill-q-num">Q${i + 1}</span>`;
+            pill.onclick = () => {
+                if (i !== currentIdx) {
+                    this.visitQuestion(i);
+                }
+            };
+
+            this.els.questionRibbon.appendChild(pill);
+        }
+
+        // Next jump indicator if not at end
+        if (end < total - 1) {
+            if (end < total - 2) {
+                const ellipsis = document.createElement('span');
+                ellipsis.className = 'ribbon-ellipsis';
+                ellipsis.textContent = '···';
+                this.els.questionRibbon.appendChild(ellipsis);
+            }
+
+            const lastPill = document.createElement('button');
+            lastPill.type = 'button';
+            lastPill.className = 'ribbon-pill ribbon-jump';
+            lastPill.title = `Go to Question ${total}`;
+            lastPill.innerHTML = `${total} <i class="ph-bold ph-caret-double-right"></i>`;
+            lastPill.onclick = () => this.visitQuestion(total - 1);
+            this.els.questionRibbon.appendChild(lastPill);
+        }
     },
 
     selectOption(selectedOpt, event) {
@@ -305,6 +426,7 @@ const QuizEngine = {
         event.currentTarget.classList.add('selected');
         
         this.renderPalette();
+        this.renderQuestionRibbon();
     },
 
     renderPalette() {
@@ -343,6 +465,8 @@ const QuizEngine = {
                 if (idx !== this.state.currentIndex) {
                     this.visitQuestion(idx);
                 }
+                const overlay = document.getElementById('palette-modal-overlay');
+                if (overlay) overlay.classList.remove('active');
             };
             this.els.questionPaletteGrid.appendChild(btn);
         });
@@ -545,7 +669,7 @@ const QuizEngine = {
 
         const correctAnswerDisplay = isScored ? this.formatMathText(q.correctAnswer) : '—';
         const trickBtn = isScored
-            ? `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-sparkle"></i> ⚡ Shortcut</button>`
+            ? `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-lightning"></i> Trick</button>`
             : '<span class="skipped-answer">—</span>';
 
         const cells = [

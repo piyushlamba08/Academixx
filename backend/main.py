@@ -1,5 +1,8 @@
 import json
 import uuid
+import threading
+import time
+import requests
 from datetime import datetime, timezone
 from typing import List
 
@@ -23,6 +26,19 @@ from database import Base, engine, get_db
 load_dotenv()
 
 app = FastAPI(title="Mock Test API")
+
+# ── Self-Ping — prevents Render free tier from sleeping ──
+def self_ping():
+    url = "https://mock-test-backend-crqm.onrender.com/api/progress/streak"
+    while True:
+        time.sleep(540)  # 9 minutes
+        try:
+            requests.get(url, timeout=10)
+            print("[Keep-alive] Self-ping sent ✅")
+        except Exception as e:
+            print(f"[Keep-alive] Ping failed: {e}")
+
+threading.Thread(target=self_ping, daemon=True).start()
 
 # Creates progress.db and all tables on first run — safe to call every startup.
 Base.metadata.create_all(bind=engine)

@@ -12,3 +12,4 @@ langgraph
 groq
 sqlalchemy
 pydantic
+requests

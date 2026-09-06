@@ -2967,6 +2967,7 @@ body.dark-theme .mobile-nav-link.active i {
     .analytics-kpi-row { grid-template-columns: repeat(2, 1fr); }
     .setup-container-card { padding: 1.25rem; }
     .form-group.row { flex-direction: column; gap: 1rem; }
+<<<<<<< HEAD
     .notebook-action-bar { flex-direction: column; align-items: stretch; gap: 0.85rem; }
     .filter-controls-left { flex-direction: column; align-items: stretch; gap: 0.75rem; }
     
@@ -3178,6 +3179,57 @@ body.dark-theme .mobile-nav-link.active i {
         gap: 0.5rem;
         padding: 1rem;
         max-height: 52vh;
+=======
+    .notebook-action-bar { flex-direction: column; align-items: stretch; }
+    .filter-controls-left { flex-direction: column; align-items: stretch; }
+
+    /* ── Exam Layout Mobile Fix ── */
+    .exam-body {
+        flex-direction: column;
+        height: calc(100vh - 120px);
+        overflow-y: auto;
+    }
+
+    .exam-left-pane {
+        flex: none;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--card-border);
+        padding: 1rem;
+        overflow-y: visible;
+    }
+
+    .exam-right-pane {
+        width: 100%;
+        max-height: 280px;
+        overflow-y: auto;
+        flex-shrink: 0;
+    }
+
+    .exam-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        padding: 0.5rem 1rem;
+        z-index: 1001;
+    }
+
+    .exam-header {
+        padding: 0.5rem 1rem;
+    }
+
+    .exam-title {
+        font-size: 0.9rem;
+    }
+
+    #quiz-screen.exam-layout #question-text {
+        font-size: 1.15rem;
+    }
+
+    .palette-grid {
+        grid-template-columns: repeat(6, 1fr);
+>>>>>>> 73b45f9 (fix: mobile exam layout overlap fix)
     }
 }
 

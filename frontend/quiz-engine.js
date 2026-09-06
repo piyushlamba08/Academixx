@@ -721,7 +721,7 @@ const QuizEngine = {
         `;
 
         try {
-            const res = await fetch('http://localhost:8000/api/ai/shortcut-trick', {
+            const res = await fetch('https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

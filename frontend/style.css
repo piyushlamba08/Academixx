@@ -3380,12 +3380,7 @@ body.dark-theme .mobile-nav-link.active i {
         gap: 0.5rem;
         padding: 1rem;
         max-height: 52vh;
-<<<<<<< HEAD
-    .notebook-action-bar { flex-direction: column; align-items: stretch; }
-    .filter-controls-left { flex-direction: column; align-items: stretch; }
-=======
     }
->>>>>>> 2c40955a1b519ccda26d0e915ac0fecf80c29f0f
 
     /* ── Mobile Assessment Completed (Result Screen) ── */
     .result-layout {
@@ -3687,33 +3682,8 @@ body.dark-theme .mobile-nav-link.active i {
         padding: 0.2rem 0.5rem;
     }
 
-    .full-width-trick {
-        width: 100%;
-        justify-content: center;
-        padding: 0.55rem 1rem;
-        font-size: 0.82rem;
-        border-radius: 10px;
-    }
-
-<<<<<<< HEAD
-    .exam-header {
-        padding: 0.5rem 1rem;
-    }
-
-    .exam-title {
-        font-size: 0.9rem;
-    }
-
-    #quiz-screen.exam-layout #question-text {
-        font-size: 1.15rem;
-    }
-
-    .palette-grid {
-        grid-template-columns: repeat(6, 1fr);
-=======
     .review-acc-trick-content {
         margin-top: 0.65rem;
->>>>>>> 2c40955a1b519ccda26d0e915ac0fecf80c29f0f
     }
 }
 

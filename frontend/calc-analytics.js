@@ -80,18 +80,25 @@ const CalcAnalytics = (() => {
         return stats;
     }
 
-    /* ── SVG speedometer (conic-gradient ring) ─────────────────────────────── */
+    /* ── SVG speedometer (Apple-style Circular Progress Ring) ──────────────── */
     function buildSpeedometer(avgSpeed, targetSpeed, color) {
         // ratio: 0 = instant (100% fast), 1 = on target, >1 = slow
         const ratio = targetSpeed > 0 ? Math.min(avgSpeed / targetSpeed, 2) : 0;
         // Fill percent: 100% when ratio=0, 0% when ratio=2
         const fillPct = Math.max(0, Math.round((1 - ratio / 2) * 100));
         const ringColor = fillPct >= 70 ? '#10b981' : fillPct >= 40 ? '#f59e0b' : '#ef4444';
-        const deg = Math.round(fillPct * 3.6); // 360 * pct/100
+        
+        // Circumference for r=28 is 2 * PI * 28 ≈ 175.93
+        const circumference = 175.93;
+        const offset = circumference - (fillPct / 100) * circumference;
 
         return `
         <div class="speedometer-wrap" title="Avg: ${avgSpeed}s | Target: ≤${targetSpeed}s">
-            <div class="speedometer-ring" style="background: conic-gradient(${ringColor} 0deg ${deg}deg, var(--bg-subtle) ${deg}deg 360deg);">
+            <div class="speedometer-ring-svg-wrap">
+                <svg class="speedometer-svg" viewBox="0 0 72 72">
+                    <circle class="speedo-bg-track" cx="36" cy="36" r="28"></circle>
+                    <circle class="speedo-fill-bar" cx="36" cy="36" r="28" style="stroke: ${ringColor}; stroke-dasharray: ${circumference}; stroke-dashoffset: ${offset};"></circle>
+                </svg>
                 <div class="speedometer-inner">
                     <span class="speedometer-val">${avgSpeed}s</span>
                     <span class="speedometer-label">avg</span>

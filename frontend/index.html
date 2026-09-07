@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academix — Smart Mock Test & Quant Mastery</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Outfit:wght@500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
@@ -430,8 +430,7 @@
             <div class="screen-page-header">
                 <div class="page-title-wrap">
                     <span class="page-kicker"><i class="ph-fill ph-chart-pie-slice"></i> Performance Analytics</span>
-                    <h1>Quantitative Progress & Score History</h1>
-                    <p class="subtitle">Complete breakdown of all tests completed and persisted in your local SQLite database.</p>
+                    <h1>Progress & Score History</h1>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
                     <i class="ph-bold ph-arrow-left"></i> Home
@@ -517,7 +516,7 @@
             <div class="screen-page-header">
                 <div class="page-title-wrap">
                     <span class="page-kicker"><i class="ph-fill ph-bookmarks"></i> Revision Hub</span>
-                    <h1>Your Mistake Notebook</h1>
+                    <h1>Mistake Notebook</h1>
                     <p class="subtitle">Every question you got wrong or skipped is organized here. Master your weak spots through focused retests.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
@@ -914,7 +913,6 @@
             <div class="result-banner">
                 <div class="result-icon-celebrate"><i class="ph-fill ph-trophy"></i></div>
                 <h2 class="result-title">Assessment Completed!</h2>
-                <p class="subtitle">Your results and accuracy metrics have been saved to your SQLite progress database.</p>
             </div>
             
             <div class="score-display-card">
@@ -936,33 +934,33 @@
             </div>
 
             <div class="stat-cards-row">
-                <div class="stat-card">
+                <div class="stat-card stat-card-correct">
                     <span class="stat-val text-green" id="stat-correct">0</span>
                     <span class="stat-label">Correct</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-wrong">
                     <span class="stat-val text-red" id="stat-wrong">0</span>
                     <span class="stat-label">Wrong</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-streak">
+                    <span class="stat-val text-orange" id="stat-streak">0</span>
+                    <span class="stat-label">🔥 Streak</span>
+                </div>
+                <div class="stat-card stat-card-accuracy">
                     <span class="stat-val text-blue" id="stat-accuracy">0%</span>
                     <span class="stat-label">Accuracy</span>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-time">
                     <span class="stat-val text-cyan" id="stat-time">00:00</span>
                     <span class="stat-label">Time Taken</span>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-val text-grey" id="stat-skipped">0</span>
-                    <span class="stat-label">Skipped</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-val text-orange" id="stat-streak">0</span>
-                    <span class="stat-label">🔥 Test Streak</span>
-                </div>
-                <div class="stat-card">
+                <div class="stat-card stat-card-best">
                     <span class="stat-val text-purple" id="stat-best-streak">0</span>
                     <span class="stat-label">All-Time Best</span>
+                </div>
+                <div class="stat-card stat-card-skipped">
+                    <span class="stat-val text-grey" id="stat-skipped">0</span>
+                    <span class="stat-label">Skipped</span>
                 </div>
             </div>
 
@@ -976,6 +974,7 @@
             </div>
             
             <div id="review-section" class="review-section" style="display: none;">
+                <!-- Desktop Table View -->
                 <div class="review-table-container">
                     <table class="review-table">
                         <thead>
@@ -993,6 +992,11 @@
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Mobile Accordion Cards View (Apple-clean dropdown cards) -->
+                <div id="review-mobile-accordion" class="review-mobile-accordion">
+                    <!-- Injected dynamically via QuizEngine -->
+                </div>
             </div>
         </div>
 
@@ -1003,8 +1007,8 @@
             <div class="screen-page-header">
                 <div class="page-title-wrap">
                     <span class="page-kicker"><i class="ph-fill ph-speedometer"></i> Calculation Speed Analytics</span>
-                    <h1>Your Calculation Speed Dashboard</h1>
-                    <p class="subtitle">Per-topic speed, accuracy & slow/fast breakdown for every calculation drill you've completed.</p>
+                    <h1>Calculation Speed Dashboard</h1>
+                    <p class="subtitle">Per-topic speed, accuracy breakdown for every completed drill.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
                     <i class="ph-bold ph-arrow-left"></i> Home
@@ -1028,7 +1032,7 @@
             <!-- Main content -->
             <div id="ca-content" style="display:none;">
                 <!-- KPI Row -->
-                <div class="analytics-kpi-row" style="grid-template-columns: repeat(6,1fr);">
+                <div class="analytics-kpi-row">
                     <div class="kpi-card">
                         <div class="kpi-icon-wrap blue"><i class="ph-bold ph-clipboard-text"></i></div>
                         <div class="kpi-info">
@@ -1107,13 +1111,13 @@
         </div>
     </div>
 
-    <script src="progress-store.js?v=5"></script>
-    <script src="quiz-engine.js?v=5"></script>
-    <script src="random-math.js?v=5"></script>
-    <script src="pdf-mock.js?v=5"></script>
-    <script src="doc-shuffle.js?v=5"></script>
-    <script src="progress-dashboard.js?v=5"></script>
-    <script src="calc-analytics.js?v=5"></script>
+    <script src="progress-store.js?v=7"></script>
+    <script src="quiz-engine.js?v=7"></script>
+    <script src="random-math.js?v=7"></script>
+    <script src="pdf-mock.js?v=7"></script>
+    <script src="doc-shuffle.js?v=7"></script>
+    <script src="progress-dashboard.js?v=7"></script>
+    <script src="calc-analytics.js?v=7"></script>
     <script>
         // Theme Toggle Logic
         const themeBtn = document.getElementById('theme-toggle');

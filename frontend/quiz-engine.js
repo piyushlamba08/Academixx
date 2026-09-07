@@ -39,6 +39,7 @@ const QuizEngine = {
 
         scoreText: document.getElementById('score-text'),
         reviewTableBody: document.getElementById('review-table-body'),
+        reviewMobileAccordion: document.getElementById('review-mobile-accordion'),
         restartBtn: document.getElementById('restart-btn'),
         reviewAnswersBtn: document.getElementById('review-answers-btn'),
         reviewSection: document.getElementById('review-section')
@@ -174,6 +175,10 @@ const QuizEngine = {
             this.state.timeRemaining = this.state.durationSeconds;
         }
         
+        if (this.els.nextBtn) this.els.nextBtn.disabled = false;
+        if (this.els.submitTestBtn) this.els.submitTestBtn.disabled = false;
+        if (this.els.backBtn) this.els.backBtn.disabled = false;
+
         this.showScreen(this.els.quizScreen);
         this.startTimer();
         this.renderQuestion();
@@ -500,6 +505,7 @@ const QuizEngine = {
         const total = this.state.questions.length;
         
         if (this.els.reviewTableBody) this.els.reviewTableBody.innerHTML = '';
+        if (this.els.reviewMobileAccordion) this.els.reviewMobileAccordion.innerHTML = '';
         if (this.els.reviewSection) this.els.reviewSection.style.display = 'none';
 
         let currentStreak = 0;
@@ -564,7 +570,7 @@ const QuizEngine = {
         const statSkipped = document.getElementById('stat-skipped');
         
         if (statCorrect) statCorrect.textContent = correctCount;
-        if (statWrong) statWrong.textContent = (wrongCount < 10 ? '0' : '') + wrongCount;
+        if (statWrong) statWrong.textContent = wrongCount;
         if (statSkipped) statSkipped.textContent = skippedCount;
         if (statTime) statTime.textContent = timeString;
         
@@ -697,6 +703,119 @@ const QuizEngine = {
         trickTr.style.display = 'none';
         trickTr.innerHTML = `<td colspan="6" class="review-trick-cell"></td>`;
         this.els.reviewTableBody.appendChild(trickTr);
+
+        // Mobile Accordion Dropdown Card
+        if (this.els.reviewMobileAccordion) {
+            const statusType = !isScored ? 'skipped' : (q.isCorrect ? 'correct' : (q.userAnswer ? 'wrong' : 'skipped'));
+            const statusLabel = !isScored ? 'Not Scored' : (q.isCorrect ? 'Correct' : (q.userAnswer ? 'Wrong' : 'Skipped'));
+            
+            const card = document.createElement('div');
+            card.className = `review-acc-card status-${statusType}`;
+            
+            card.innerHTML = `
+                <div class="review-acc-header" onclick="this.parentElement.classList.toggle('expanded')">
+                    <div class="review-acc-header-left">
+                        <span class="review-acc-num">Q${number}</span>
+                        <span class="review-acc-question">${this.formatMathText(q.question)}</span>
+                    </div>
+                    <div class="review-acc-header-right" onclick="event.stopPropagation()">
+                        ${isScored ? `
+                        <button type="button" class="ai-trick-btn review-header-trick-btn" onclick="QuizEngine.showReviewTrickMobile(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')">
+                            <i class="ph-fill ph-lightning"></i> Trick
+                        </button>` : ''}
+                        <span class="review-acc-badge badge-${statusType}">${statusLabel}</span>
+                        <i class="ph-bold ph-caret-down review-acc-arrow" onclick="this.closest('.review-acc-card').classList.toggle('expanded')"></i>
+                    </div>
+                </div>
+                <div class="review-acc-body">
+                    <div class="review-acc-details-grid">
+                        <div class="review-acc-detail-item">
+                            <span class="acc-detail-label">Your Answer</span>
+                            <span class="acc-detail-val ${q.userAnswer ? (q.isCorrect ? 'text-green' : 'text-red') : 'text-grey'}">${q.userAnswer ? this.formatMathText(q.userAnswer) : 'Skipped'}</span>
+                        </div>
+                        <div class="review-acc-detail-item">
+                            <span class="acc-detail-label">Correct Answer</span>
+                            <span class="acc-detail-val text-green">${correctAnswerDisplay}</span>
+                        </div>
+                        <div class="review-acc-detail-item">
+                            <span class="acc-detail-label">Time Spent</span>
+                            <span class="acc-detail-val">${time}</span>
+                        </div>
+                        <div class="review-acc-detail-item">
+                            <span class="acc-detail-label">Speed Rating</span>
+                            <div class="acc-speed-wrap">${speedBadge}</div>
+                        </div>
+                    </div>
+                    <div class="review-acc-trick-content" style="display: none;"></div>
+                </div>
+            `;
+            this.els.reviewMobileAccordion.appendChild(card);
+        }
+    },
+
+    async showReviewTrickMobile(btn, qTextEnc, ansEnc) {
+        const card = btn.closest('.review-acc-card');
+        const container = card?.querySelector('.review-acc-trick-content');
+        if (!card || !container) return;
+
+        // Auto-expand card body if collapsed
+        card.classList.add('expanded');
+
+        if (container.style.display === 'block') {
+            container.style.display = 'none';
+            btn.classList.remove('active');
+            return;
+        }
+
+        btn.classList.add('active');
+        container.style.display = 'block';
+        container.innerHTML = `
+            <div class="ai-trick-loading">
+                <div class="spinner-small"></div>
+                <span>Consulting AI Coach for 10-second shortcut trick...</span>
+            </div>
+        `;
+
+        try {
+            const res = await fetch('https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: decodeURIComponent(qTextEnc),
+                    correct_answer: decodeURIComponent(ansEnc)
+                })
+            });
+            const trickTitleClean = (data.trick_title || 'Speed Shortcut Trick').replace(/^⚡\s*/, '');
+            const topperShortcutClean = (data.topper_shortcut || '').replace(/^⚡\s*/, '');
+            const takeawayClean = (data.key_takeaway || '').replace(/^💡\s*/, '');
+            const tradClean = (data.traditional_vs_shortcut || '').replace(/^🐢\s*/, '');
+
+            container.innerHTML = `
+                <div class="ai-trick-card">
+                    <div class="ai-trick-head">
+                        <div class="ai-trick-title"><i class="ph-fill ph-lightning"></i> ${trickTitleClean}</div>
+                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds}s</span>
+                    </div>
+                    <div class="ai-trick-body">
+                        <div class="ai-step-box">
+                            <strong><i class="ph-fill ph-lightning"></i> Shortcut Trick</strong>
+                            <p>${topperShortcutClean}</p>
+                        </div>
+                        ${tradClean ? `
+                        <div class="ai-comparison-box">
+                            <strong><i class="ph-bold ph-hourglass-high"></i> Traditional vs Shortcut</strong>
+                            <p>${tradClean}</p>
+                        </div>` : ''}
+                        <div class="ai-takeaway-box">
+                            <strong><i class="ph-fill ph-lightbulb"></i> Key Takeaway</strong>
+                            <p>${takeawayClean}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            container.innerHTML = `<div class="error-message active">Could not generate AI trick. Please try again.</div>`;
+        }
     },
 
     async showReviewTrick(btn, qTextEnc, ansEnc) {
@@ -729,30 +848,35 @@ const QuizEngine = {
                     correct_answer: decodeURIComponent(ansEnc)
                 })
             });
-            const data = await res.json();
-            cell.innerHTML = `
+            const trickTitleClean = (data.trick_title || 'Speed Shortcut Trick').replace(/^⚡\s*/, '');
+            const topperShortcutClean = (data.topper_shortcut || '').replace(/^⚡\s*/, '');
+            const takeawayClean = (data.key_takeaway || '').replace(/^💡\s*/, '');
+            const tradClean = (data.traditional_vs_shortcut || '').replace(/^🐢\s*/, '');
+
+            const trickHtml = `
                 <div class="ai-trick-card">
                     <div class="ai-trick-head">
-                        <div class="ai-trick-title"><i class="ph-fill ph-lightning text-orange"></i> ${data.trick_title}</div>
-                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> Target: &le; ${data.target_time_seconds}s</span>
+                        <div class="ai-trick-title"><i class="ph-fill ph-lightning"></i> ${trickTitleClean}</div>
+                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds}s</span>
                     </div>
                     <div class="ai-trick-body">
                         <div class="ai-step-box">
-                            <strong>⚡ Topper's Shortcut Trick:</strong>
-                            <p>${data.topper_shortcut}</p>
+                            <strong><i class="ph-fill ph-lightning"></i> Shortcut Trick</strong>
+                            <p>${topperShortcutClean}</p>
                         </div>
-                        ${data.traditional_vs_shortcut ? `
+                        ${tradClean ? `
                         <div class="ai-comparison-box">
-                            <strong>🐢 Why Long Method Fails vs Shortcut:</strong>
-                            <p>${data.traditional_vs_shortcut}</p>
+                            <strong><i class="ph-bold ph-hourglass-high"></i> Traditional vs Shortcut</strong>
+                            <p>${tradClean}</p>
                         </div>` : ''}
                         <div class="ai-takeaway-box">
-                            <strong>💡 Golden Rule / AIR 1 Takeaway:</strong>
-                            <p>${data.key_takeaway}</p>
+                            <strong><i class="ph-fill ph-lightbulb"></i> Key Takeaway</strong>
+                            <p>${takeawayClean}</p>
                         </div>
                     </div>
                 </div>
             `;
+            cell.innerHTML = trickHtml;
         } catch (e) {
             cell.innerHTML = `
                 <div class="ai-trick-card error">

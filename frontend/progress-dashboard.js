@@ -98,27 +98,32 @@ const ProgressDashboard = (() => {
 
         byId('test-history').innerHTML = tests.map(t => {
             const acc = t.total ? Math.round((t.correctCount / t.total) * 100) : 0;
+            const topicName = escapeHtml(t.topic || 'Mock Drill');
+            const dateStr = formatDate(t.completedAt);
+            const timeStr = formatTime(t.durationSeconds);
+            const isGoodAcc = acc >= 75;
+            const isMidAcc = acc >= 40 && acc < 75;
+            const accClass = isGoodAcc ? 'acc-pill-good' : (isMidAcc ? 'acc-pill-mid' : 'acc-pill-low');
+
             return `
             <div class="history-item-card" onclick="ProgressDashboard.openTest('${t.id}')">
                 <div class="history-left">
                     <div class="history-icon-box">
-                        <i class="ph-bold ph-chart-polar"></i>
+                        <i class="ph-fill ph-chart-polar"></i>
                     </div>
                     <div class="history-meta">
-                        <h4>${escapeHtml(t.topic || 'Mock Drill')}</h4>
-                        <div class="history-sub">
-                            <span><i class="ph ph-calendar-blank"></i> ${formatDate(t.completedAt)}</span>
-                            <span>•</span>
-                            <span><i class="ph ph-timer"></i> ${formatTime(t.durationSeconds)}</span>
-                            <span>•</span>
-                            <span>${t.total} Questions</span>
+                        <div class="history-topic-title">${topicName}</div>
+                        <div class="history-meta-badges">
+                            <span class="meta-chip"><i class="ph-bold ph-calendar-blank"></i> ${dateStr}</span>
+                            <span class="meta-chip"><i class="ph-bold ph-timer"></i> ${timeStr}</span>
+                            <span class="meta-chip"><i class="ph-bold ph-list-numbers"></i> ${t.total} Qs</span>
                         </div>
                     </div>
                 </div>
                 <div class="history-right">
-                    <div class="score-pill">
-                        <b>${t.correctCount} / ${t.total}</b>
-                        <small>${acc}% Accuracy</small>
+                    <div class="history-score-col">
+                        <div class="history-score-val"><b>${t.correctCount}</b><span class="history-score-total">/${t.total}</span></div>
+                        <span class="history-acc-pill ${accClass}">${acc}%</span>
                     </div>
                     <i class="ph-bold ph-caret-right history-arrow"></i>
                 </div>

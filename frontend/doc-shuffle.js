@@ -129,7 +129,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!data.questions || data.questions.length === 0) {
                 throw new Error(
-                    'No questions found. Make sure your document has questions in (a) (b) (c) (d) format.'
+                    'No questions found. Make sure your document has questions Q1. Question text here?(a) Option one(b) Option two(c) Option three(d) Option four Answer: (b) format.'
                 );
             }
 

@@ -75,6 +75,21 @@ document.addEventListener('DOMContentLoaded', () => {
         els.errorMsg.classList.add('active');
     }
 
+    // Custom timer toggle — PDF Mock
+    document.querySelectorAll('#pdf-duration-group .mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#pdf-duration-group .mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const customRow = document.getElementById('pdf-custom-time-row');
+            if (btn.dataset.val === 'custom') {
+                customRow.style.display = 'flex';
+                document.getElementById('pdf-custom-minutes').focus();
+            } else {
+                customRow.style.display = 'none';
+            }
+        });
+    });
+
     els.generateBtn.addEventListener('click', async () => {
         if (!selectedFile) {
             showError("Please select a PDF or DOCX file first.");
@@ -82,7 +97,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const activeBtn = document.querySelector('#pdf-duration-group .mode-btn.active');
-        const durationMinutes = activeBtn ? parseInt(activeBtn.dataset.val) : 15;
+        let durationMinutes = activeBtn ? parseInt(activeBtn.dataset.val) : 15;
+        if (activeBtn && activeBtn.dataset.val === 'custom') {
+            const customVal = parseInt(document.getElementById('pdf-custom-minutes').value);
+            durationMinutes = (customVal > 0 && customVal <= 180) ? customVal : 15;
+        }
 
         els.generateBtn.disabled = true;
         els.loadingState.classList.add('active');

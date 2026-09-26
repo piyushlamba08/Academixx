@@ -241,9 +241,9 @@ const SyllabusManager = (() => {
                                         const isRoundChecked = !!itemData[rKey];
                                         return `
                                             <td class="col-round">
-                                                <label class="round-checkbox-wrap" title="${r} Revision">
+                                                <label class="custom-checkbox-wrap round-check-wrap" title="${r} Revision">
                                                     <input type="checkbox" ${isRoundChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', '${rKey}', this.checked)">
-                                                    <span class="round-checkmark">${r}</span>
+                                                    <span class="checkmark"></span>
                                                 </label>
                                             </td>
                                         `;

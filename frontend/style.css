@@ -4718,29 +4718,43 @@ body.dark-theme .ca-bar-track {
     position: relative;
     width: 22px;
     height: 22px;
+    margin: 0 auto;
 }
 
 .custom-checkbox-wrap input {
     position: absolute;
     opacity: 0;
     cursor: pointer;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    margin: 0;
+    z-index: 2;
 }
 
 .custom-checkbox-wrap .checkmark {
-    width: 22px;
-    height: 22px;
-    background: var(--bg-subtle);
-    border: 2px solid var(--border-medium);
+    width: 20px;
+    height: 20px;
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-medium);
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.15s ease;
+    transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.custom-checkbox-wrap:hover .checkmark {
+    border-color: var(--primary);
+    background: var(--bg-subtle);
 }
 
 .custom-checkbox-wrap input:checked ~ .checkmark {
     background: #10b981;
     border-color: #10b981;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
 }
 
 .custom-checkbox-wrap input:checked ~ .checkmark::after {
@@ -4748,38 +4762,28 @@ body.dark-theme .ca-bar-track {
     color: #fff;
     font-size: 0.85rem;
     font-weight: 800;
+    line-height: 1;
 }
 
-.round-checkbox-wrap {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    position: relative;
+/* Specific styling for R1-R8 revision round checkboxes */
+.round-check-wrap .checkmark {
+    width: 19px;
+    height: 19px;
+    border-radius: 5px;
+    border-color: var(--border-subtle);
 }
 
-.round-checkbox-wrap input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.round-checkmark {
-    font-size: 0.68rem;
-    font-weight: 800;
-    color: var(--text-muted);
-    background: var(--bg-subtle);
-    border: 1px solid var(--border-subtle);
-    padding: 0.22rem 0.48rem;
-    border-radius: 6px;
-    transition: all 0.15s ease;
-}
-
-.round-checkbox-wrap input:checked ~ .round-checkmark {
+.round-check-wrap input:checked ~ .checkmark {
     background: var(--primary);
     border-color: var(--primary);
-    color: #fff;
     box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+}
+
+.round-check-wrap input:checked ~ .checkmark::after {
+    content: '✓';
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 800;
 }
 
 .syllabus-empty-state {

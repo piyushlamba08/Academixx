@@ -95,6 +95,13 @@ document.addEventListener('DOMContentLoaded', () => {
             document.querySelectorAll('#doc-shuffle-duration-group .mode-btn')
                 .forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            const customRow = document.getElementById('doc-custom-time-row');
+            if (btn.dataset.val === 'custom') {
+                customRow.style.display = 'flex';
+                document.getElementById('doc-custom-minutes').focus();
+            } else {
+                customRow.style.display = 'none';
+            }
         });
     });
 
@@ -106,7 +113,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const activeBtn = document.querySelector('#doc-shuffle-duration-group .mode-btn.active');
-        const durationMinutes = activeBtn ? parseInt(activeBtn.dataset.val) : 20;
+        let durationMinutes = activeBtn ? parseInt(activeBtn.dataset.val) : 20;
+        if (activeBtn && activeBtn.dataset.val === 'custom') {
+            const customVal = parseInt(document.getElementById('doc-custom-minutes').value);
+            durationMinutes = (customVal > 0 && customVal <= 180) ? customVal : 20;
+        }
 
         els.startBtn.disabled = true;
         els.loadingState.classList.add('active');
@@ -129,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!data.questions || data.questions.length === 0) {
                 throw new Error(
-                    'No questions found. Make sure your document has questions in (a) (b) (c) (d) format.'
+                    'No questions found. Make sure your document has questions Q1. Question text here?(a) Option one(b) Option two(c) Option three(d) Option four Answer: (b) format.'
                 );
             }
 

@@ -743,6 +743,12 @@
                     <div class="difficulty-modes" id="pdf-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn active" data-val="15">15 Min</button>
                         <button type="button" class="mode-btn" data-val="20">20 Min</button>
+                        <button type="button" class="mode-btn" data-val="30">30 Min</button>
+                        <button type="button" class="mode-btn" data-val="custom" id="pdf-custom-btn">Custom</button>
+                    </div>
+                    <div id="pdf-custom-time-row" style="display:none; margin-top: 0.6rem; display: none; align-items: center; gap: 0.5rem;">
+                        <input type="number" id="pdf-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 80px; text-align:center;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">minutes</span>
                     </div>
                 </div>
                 
@@ -807,6 +813,11 @@
                         <button type="button" class="mode-btn active" data-val="20">20 Min</button>
                         <button type="button" class="mode-btn" data-val="30">30 Min</button>
                         <button type="button" class="mode-btn" data-val="45">45 Min</button>
+                        <button type="button" class="mode-btn" data-val="custom" id="doc-custom-btn">Custom</button>
+                    </div>
+                    <div id="doc-custom-time-row" style="display:none; margin-top: 0.6rem; align-items: center; gap: 0.5rem;">
+                        <input type="number" id="doc-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 80px; text-align:center;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">minutes</span>
                     </div>
                 </div>
                 <div class="col" style="flex: 1;">
@@ -1042,8 +1053,8 @@
             <div class="screen-page-header">
                 <div class="page-title-wrap">
                     <span class="page-kicker"><i class="ph-fill ph-speedometer"></i> Calculation Speed Analytics</span>
-                    <h1>Calculation Speed Dashboard</h1>
-                    <p class="subtitle">Per-topic speed, accuracy breakdown for every completed drill.</p>
+                       <h1>Calculation Speed Dashboard</h1>
+                    <p class="subtitle">Per-topic speed, accuracy breakdown for completed drill.</p>
                 </div>
                 <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
                     <i class="ph-bold ph-arrow-left"></i> Home

@@ -32,8 +32,32 @@ const ProgressDashboard = (() => {
         }).catch(() => {});
     }
 
+    /* ── Helper: Check if test is AI Mock or Document Shuffle ── */
+    function isMockTestEligible(test = {}) {
+        const topic = (test.topic || '').toLowerCase();
+        const src = (test.sourceName || '').toLowerCase();
+
+        // 1. Document Shuffle tests
+        if (topic.includes('document shuffle') || src.includes('document shuffle') || topic.includes('doc shuffle')) {
+            return true;
+        }
+
+        // 2. AI Mock Tests generated from files (.pdf, .docx, file uploads)
+        if (src.endsWith('.pdf') || src.endsWith('.docx') || src.includes('.pdf') || src.includes('.docx')) {
+            return true;
+        }
+        if (topic.includes('ai mock') || src.includes('ai mock') || topic.includes('pdf mock') || src.includes('pdf mock') || topic.includes('mock drill')) {
+            return true;
+        }
+
+        return false;
+    }
+
     async function renderDashboard() {
-        const tests = await ProgressStore.getTests();
+        const allTests = await ProgressStore.getTests();
+        // Only include AI Mock Tests and Document Shuffle tests on this page
+        const tests = allTests.filter(isMockTestEligible);
+
         byId('dashboard-empty').style.display = tests.length ? 'none' : 'block';
         byId('dashboard-content').style.display = tests.length ? 'block' : 'none';
         if (!tests.length) return;
@@ -61,33 +85,33 @@ const ProgressDashboard = (() => {
         const dashTimeEl = byId('dash-time-spent');
         if (dashTimeEl) dashTimeEl.textContent = `${Math.round(totals.duration / 60)} mins`;
 
-        // Compute Calculation Speed Metrics for the 4 pills
-        let totalCalcQ = 0;
-        let totalCalcTime = 0;
-        let totalCalcFast = 0;
-        let totalCalcSlow = 0;
+        // Compute Speed & Question metrics strictly for AI Mock & Document Shuffle tests
+        let totalMockQ = 0;
+        let totalMockTime = 0;
+        let totalMockFast = 0;
+        let totalMockSlow = 0;
 
         tests.forEach(test => {
             const questions = test.questions || [];
             questions.forEach(q => {
-                totalCalcQ++;
+                totalMockQ++;
                 const spent = q.timeSpentSeconds || 0;
-                totalCalcTime += spent;
-                const target = 15; // default target baseline
-                if (spent > 0 && spent <= target) totalCalcFast++;
-                else if (spent > target * 1.5) totalCalcSlow++;
+                totalMockTime += spent;
+                const target = 25; // standard target for exam/mock questions
+                if (spent > 0 && spent <= target) totalMockFast++;
+                else if (spent > target * 1.5) totalMockSlow++;
             });
         });
 
-        const avgCalcSpeed = totalCalcQ ? Math.round(totalCalcTime / totalCalcQ) : 0;
+        const avgMockSpeed = totalMockQ ? Math.round(totalMockTime / totalMockQ) : 0;
         const qEl = byId('dash-calc-questions');
-        if (qEl) qEl.textContent = totalCalcQ;
+        if (qEl) qEl.textContent = totalMockQ;
         const speedEl = byId('dash-calc-speed');
-        if (speedEl) speedEl.textContent = avgCalcSpeed > 0 ? `${avgCalcSpeed}s` : '—';
+        if (speedEl) speedEl.textContent = avgMockSpeed > 0 ? `${avgMockSpeed}s` : '—';
         const fastEl = byId('dash-calc-fast');
-        if (fastEl) fastEl.textContent = totalCalcFast;
+        if (fastEl) fastEl.textContent = totalMockFast;
         const slowEl = byId('dash-calc-slow');
-        if (slowEl) slowEl.textContent = totalCalcSlow;
+        if (slowEl) slowEl.textContent = totalMockSlow;
 
         const topics = {};
         tests.forEach(t => { 

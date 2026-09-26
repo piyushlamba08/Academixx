@@ -444,7 +444,9 @@
                 <div class="empty-icon-wrap"><i class="ph ph-chart-line-down"></i></div>
                 <h3>No Test History Logged Yet</h3>
                 <p>Complete any Quant Drill or PDF Mock Test to see comprehensive analytics, topic mastery charts, and accuracy trends here.</p>
-                <button class="primary-btn" style="max-width: 200px; margin: 1rem auto 0;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">Take a Test</button>
+                <button class="primary-btn" style="margin-top: 1.5rem;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">
+                    <i class="ph-bold ph-play"></i> Take a Test
+                </button>
             </div>
 
             <div id="dashboard-content" style="display:none;">
@@ -583,7 +585,9 @@
                 <div class="empty-icon-wrap"><i class="ph-fill ph-check-circle text-green"></i></div>
                 <h3>Notebook is Clear! 🎉</h3>
                 <p>You have no active mistakes recorded. Whenever you get a question wrong or skip it in a test, it will automatically land here for targeted practice.</p>
-                <button class="primary-btn" style="max-width: 200px; margin: 1rem auto 0;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">Start a Drill</button>
+                <button class="primary-btn" style="margin-top: 1.5rem;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">
+                    <i class="ph-bold ph-play"></i> Start a Drill
+                </button>
             </div>
 
             <div id="notebook-list" class="modern-notebook-list"></div>
@@ -1072,46 +1076,50 @@
                 <div class="empty-icon-wrap"><i class="ph ph-chart-line-down"></i></div>
                 <h3>No Calculation History Yet</h3>
                 <p>Complete any Speed Drill (Squares, Tables, % drills etc.) and come back here to see your speed & accuracy analytics.</p>
-                <button class="primary-btn" style="max-width:200px; margin:1rem auto 0;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">Take a Drill</button>
+                <button class="primary-btn" style="margin-top: 1.5rem;" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">
+                    <i class="ph-bold ph-lightning"></i> Take a Drill
+                </button>
             </div>
 
             <!-- Main content -->
             <div id="ca-content" style="display:none;">
-                <!-- KPI Row -->
-                <div class="analytics-kpi-row ca-kpi-row">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-total-questions">0</span>
-                            <span class="kpi-label">Questions Done</span>
+                <!-- Per-Topic Breakdown with Integrated KPI Metrics Header -->
+                <div class="analytics-section-box ca-unified-box">
+                    <div class="ca-kpi-integrated-bar">
+                        <div class="ca-mini-stat">
+                            <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
+                            <div class="kpi-info">
+                                <span class="kpi-val" id="ca-total-questions">0</span>
+                                <span class="kpi-label">Questions Done</span>
+                            </div>
+                        </div>
+                        <div class="ca-kpi-divider"></div>
+                        <div class="ca-mini-stat">
+                            <div class="kpi-icon-wrap cyan"><i class="ph-bold ph-timer"></i></div>
+                            <div class="kpi-info">
+                                <span class="kpi-val" id="ca-avg-speed">—</span>
+                                <span class="kpi-label">Avg Speed</span>
+                            </div>
+                        </div>
+                        <div class="ca-kpi-divider"></div>
+                        <div class="ca-mini-stat">
+                            <div class="kpi-icon-wrap orange"><i class="ph-bold ph-lightning"></i></div>
+                            <div class="kpi-info">
+                                <span class="kpi-val" id="ca-fast-count">0</span>
+                                <span class="kpi-label">Fast Answers</span>
+                            </div>
+                        </div>
+                        <div class="ca-kpi-divider"></div>
+                        <div class="ca-mini-stat">
+                            <div class="kpi-icon-wrap red"><i class="ph-bold ph-warning"></i></div>
+                            <div class="kpi-info">
+                                <span class="kpi-val" id="ca-slow-count">0</span>
+                                <span class="kpi-label">Slow Answers</span>
+                            </div>
                         </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap cyan"><i class="ph-bold ph-timer"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-avg-speed">—</span>
-                            <span class="kpi-label">Avg Speed</span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap orange"><i class="ph-bold ph-lightning"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-fast-count">0</span>
-                            <span class="kpi-label">Fast Answers</span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap red"><i class="ph-bold ph-warning"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-slow-count">0</span>
-                            <span class="kpi-label">Slow Answers</span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Per-Topic Breakdown -->
-                <div class="analytics-section-box">
-                    <div class="sec-head">
+                    <div class="sec-head ca-sec-head-top">
                         <h3><i class="ph-bold ph-chart-bar"></i> Per-Topic Speed & Accuracy</h3>
                         <p class="sec-sub">Each card shows your average time vs the target time, with Fast% and Slow% bars.</p>
                     </div>

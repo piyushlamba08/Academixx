@@ -35,6 +35,27 @@ const CalcAnalytics = (() => {
         return null;
     }
 
+    /* ── Filter tests: Exclude AI Mock Tests & Document Shuffle Drills ─────── */
+    function isCalcSpeedEligibleTest(test = {}) {
+        const topic = (test.topic || '').toLowerCase();
+        const src = (test.sourceName || '').toLowerCase();
+
+        // 1. Exclude Document Shuffle tests
+        if (topic.includes('document shuffle') || src.includes('document shuffle') || topic.includes('doc shuffle')) {
+            return false;
+        }
+
+        // 2. Exclude AI Mock Tests generated from files (.pdf, .docx, file uploads)
+        if (src.endsWith('.pdf') || src.endsWith('.docx') || src.includes('.pdf') || src.includes('.docx')) {
+            return false;
+        }
+        if (topic.includes('ai mock') || src.includes('ai mock') || topic.includes('pdf mock') || src.includes('pdf mock')) {
+            return false;
+        }
+
+        return true;
+    }
+
     /* ── Aggregate stats by topic ──────────────────────────────────────────── */
     function buildTopicStats(tests) {
         const stats = {};
@@ -42,7 +63,10 @@ const CalcAnalytics = (() => {
             stats[t.key] = { sessions: 0, totalQ: 0, correct: 0, totalTime: 0, fast: 0, slow: 0 };
         });
 
-        tests.forEach(test => {
+        // Filter out AI mocks and Document Shuffle mocks
+        const calcTests = tests.filter(isCalcSpeedEligibleTest);
+
+        calcTests.forEach(test => {
             // Determine topic from stored field or detect from first question
             let topicKey = test.topic ? test.topic.toLowerCase().replace(/\s/g,'') : null;
             // Try mapping stored topic name to our key
@@ -264,8 +288,9 @@ const CalcAnalytics = (() => {
             console.warn('[CalcAnalytics] Could not fetch tests', e);
         }
 
-        const topicStats = buildTopicStats(tests);
-        render(tests, topicStats);
+        const calcTests = tests.filter(isCalcSpeedEligibleTest);
+        const topicStats = buildTopicStats(calcTests);
+        render(calcTests, topicStats);
         if (loadEl) loadEl.style.display = 'none';
     }
 

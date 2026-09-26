@@ -422,6 +422,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.disabled = false;
         startBtn.textContent = originalBtnText;
 
+        const topicLabel = (currentOperation === 'random') ? 'Mixed Calculation' : (currentOperation.charAt(0).toUpperCase() + currentOperation.slice(1));
+
         // Configure Quiz Engine
         QuizEngine.state.negativeMarking = negativeMarking;
         QuizEngine.state.timerMode = timerSetting.startsWith('countdown') ? 'countdown' : 'stopwatch';
@@ -429,6 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timerSetting === 'countdown_15') durationMins = 15;
         if (timerSetting === 'countdown_20') durationMins = 20;
 
-        QuizEngine.startQuiz(questions, durationMins);
+        QuizEngine.startQuiz(questions, durationMins, {
+            topic: topicLabel,
+            sourceName: `${topicLabel} Speed Drill`,
+            trackProgress: true
+        });
     });
 });

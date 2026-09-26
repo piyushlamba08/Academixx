@@ -1083,43 +1083,41 @@
 
             <!-- Main content -->
             <div id="ca-content" style="display:none;">
-                <!-- Per-Topic Breakdown with Integrated KPI Metrics Header -->
-                <div class="analytics-section-box ca-unified-box">
-                    <div class="ca-kpi-integrated-bar">
-                        <div class="ca-mini-stat">
-                            <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
-                            <div class="kpi-info">
-                                <span class="kpi-val" id="ca-total-questions">0</span>
-                                <span class="kpi-label">Questions Done</span>
-                            </div>
-                        </div>
-                        <div class="ca-kpi-divider"></div>
-                        <div class="ca-mini-stat">
-                            <div class="kpi-icon-wrap cyan"><i class="ph-bold ph-timer"></i></div>
-                            <div class="kpi-info">
-                                <span class="kpi-val" id="ca-avg-speed">—</span>
-                                <span class="kpi-label">Avg Speed</span>
-                            </div>
-                        </div>
-                        <div class="ca-kpi-divider"></div>
-                        <div class="ca-mini-stat">
-                            <div class="kpi-icon-wrap orange"><i class="ph-bold ph-lightning"></i></div>
-                            <div class="kpi-info">
-                                <span class="kpi-val" id="ca-fast-count">0</span>
-                                <span class="kpi-label">Fast Answers</span>
-                            </div>
-                        </div>
-                        <div class="ca-kpi-divider"></div>
-                        <div class="ca-mini-stat">
-                            <div class="kpi-icon-wrap red"><i class="ph-bold ph-warning"></i></div>
-                            <div class="kpi-info">
-                                <span class="kpi-val" id="ca-slow-count">0</span>
-                                <span class="kpi-label">Slow Answers</span>
-                            </div>
+                <!-- Main Calculation KPI Cards Row (Separate Individual Cards) -->
+                <div class="analytics-kpi-row ca-standalone-kpi-row">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-purple" id="ca-total-questions">0</span>
+                            <span class="kpi-label">Questions Done</span>
                         </div>
                     </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap cyan"><i class="ph-bold ph-timer"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-cyan" id="ca-avg-speed">—</span>
+                            <span class="kpi-label">Avg Speed</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap orange"><i class="ph-bold ph-lightning"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-orange" id="ca-fast-count">0</span>
+                            <span class="kpi-label">Fast Answers</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap red"><i class="ph-bold ph-warning"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-red" id="ca-slow-count">0</span>
+                            <span class="kpi-label">Slow Answers</span>
+                        </div>
+                    </div>
+                </div>
 
-                    <div class="sec-head ca-sec-head-top">
+                <!-- Per-Topic Breakdown -->
+                <div class="analytics-section-box">
+                    <div class="sec-head">
                         <h3><i class="ph-bold ph-chart-bar"></i> Per-Topic Speed & Accuracy</h3>
                         <p class="sec-sub">Each card shows your average time vs the target time, with Fast% and Slow% bars.</p>
                     </div>

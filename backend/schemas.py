@@ -130,3 +130,14 @@ class ShortcutResponse(BaseModel):
     traditional_vs_shortcut: Optional[str] = None
     key_takeaway: str
     target_time_seconds: int = 15
+
+
+class TranslateRequest(BaseModel):
+    text: str
+    target_lang: str = "hi"
+
+
+class TranslateResponse(BaseModel):
+    translated: str
+    target_lang: str
+

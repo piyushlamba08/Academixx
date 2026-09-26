@@ -36,6 +36,8 @@ const QuizEngine = {
         questionPaletteGrid: document.getElementById('question-palette-grid'),
         questionRibbon: document.getElementById('exam-question-ribbon'),
         questionCountBadge: document.getElementById('question-count-badge'),
+        translateQuestionBtn: document.getElementById('translate-question-btn'),
+        translateBtnLabel: document.getElementById('translate-btn-label'),
 
         scoreText: document.getElementById('score-text'),
         reviewTableBody: document.getElementById('review-table-body'),
@@ -53,6 +55,9 @@ const QuizEngine = {
         }
         if (this.els.submitTestBtn) {
             this.els.submitTestBtn.addEventListener('click', () => this.submitQuiz());
+        }
+        if (this.els.translateQuestionBtn) {
+            this.els.translateQuestionBtn.addEventListener('click', () => this.translateCurrentQuestion());
         }
         
         if (this.els.manualAnswerInput) {
@@ -159,7 +164,9 @@ const QuizEngine = {
             ...q,
             status: 'not_visited',
             timeSpentSeconds: 0,
-            shownAt: null
+            shownAt: null,
+            _isHindi: false,
+            _hindiTranslation: null
         }));
         
         this.state.currentIndex = 0;
@@ -298,9 +305,12 @@ const QuizEngine = {
         if (this.els.questionNumberBadge) {
             this.els.questionNumberBadge.textContent = `Question No. ${current}`;
         }
-        
-        this.els.questionText.innerHTML = this.formatMathText(q.question);
-        
+
+        const displayQuestion = (q._isHindi && q._hindiTranslation?.question) ? q._hindiTranslation.question : q.question;
+        this.els.questionText.innerHTML = this.formatMathText(displayQuestion);
+
+        this.updateTranslateButton(q);
+
         if (q.inputMode === 'manual') {
             this.els.optionsContainer.style.display = 'none';
             this.els.manualInputContainer.style.display = 'block';
@@ -310,16 +320,19 @@ const QuizEngine = {
             this.els.manualInputContainer.style.display = 'none';
             this.els.optionsContainer.style.display = 'flex';
             this.els.optionsContainer.innerHTML = '';
-            
+
             q.options = q.options || [];
-            q.options.forEach((opt, idx) => {
+            const displayOptions = (q._isHindi && q._hindiTranslation?.options) ? q._hindiTranslation.options : q.options;
+
+            displayOptions.forEach((dispOpt, idx) => {
                 const btn = document.createElement('button');
                 btn.className = 'option-btn';
-                if (q.userAnswer === opt) {
+                const originalOpt = q.options[idx];
+                if (q.userAnswer === originalOpt) {
                     btn.classList.add('selected');
                 }
-                btn.innerHTML = this.formatMathText(opt);
-                btn.onclick = (e) => this.selectOption(opt, e);
+                btn.innerHTML = this.formatMathText(dispOpt);
+                btn.onclick = (e) => this.selectOption(originalOpt, e);
                 this.els.optionsContainer.appendChild(btn);
             });
         }
@@ -907,6 +920,126 @@ const QuizEngine = {
     formatMathText(text) {
         if (typeof text !== 'string') return text;
         return text.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="num">$1</span><span class="den">$2</span></span>');
+    },
+
+    updateTranslateButton(q) {
+        const btn = this.els.translateQuestionBtn || document.getElementById('translate-question-btn');
+        const label = this.els.translateBtnLabel || document.getElementById('translate-btn-label');
+        if (!btn || !label) return;
+
+        if (!q) {
+            btn.style.display = 'none';
+            return;
+        }
+        btn.style.display = 'inline-flex';
+
+        if (q._isHindi) {
+            btn.classList.add('is-translated');
+            label.textContent = 'English';
+            btn.title = 'Switch back to English';
+        } else {
+            btn.classList.remove('is-translated');
+            label.textContent = 'हिंदी';
+            btn.title = 'Translate to Hindi';
+        }
+    },
+
+    async translateCurrentQuestion() {
+        const q = this.state.questions[this.state.currentIndex];
+        if (!q) return;
+
+        // If currently translated in Hindi, switch back to English immediately
+        if (q._isHindi) {
+            q._isHindi = false;
+            this.renderQuestion();
+            return;
+        }
+
+        // If already translated and cached in memory, switch to Hindi instantly
+        if (q._hindiTranslation) {
+            q._isHindi = true;
+            this.renderQuestion();
+            return;
+        }
+
+        const btn = this.els.translateQuestionBtn || document.getElementById('translate-question-btn');
+        const label = this.els.translateBtnLabel || document.getElementById('translate-btn-label');
+
+        if (btn) {
+            btn.disabled = true;
+            btn.classList.add('loading');
+            if (label) label.innerHTML = '<span class="btn-spinner-tiny"></span>';
+        }
+
+        try {
+            // Translate question stem
+            const qPromise = this.translateText(q.question, 'hi');
+            // Translate options in parallel
+            const optPromises = (q.options || []).map(opt => this.translateText(opt, 'hi'));
+
+            const [translatedQ, ...translatedOpts] = await Promise.all([qPromise, ...optPromises]);
+
+            q._hindiTranslation = {
+                question: translatedQ || q.question,
+                options: (translatedOpts && translatedOpts.length === q.options.length) ? translatedOpts : q.options
+            };
+            q._isHindi = true;
+        } catch (err) {
+            console.error('[Translate Error]:', err);
+        } finally {
+            if (btn) {
+                btn.disabled = false;
+                btn.classList.remove('loading');
+            }
+            this.renderQuestion();
+        }
+    },
+
+    async translateText(text, targetLang = 'hi') {
+        if (!text || typeof text !== 'string') return text;
+        const trimmed = text.trim();
+        if (!trimmed) return text;
+
+        // Skip translation for pure numbers or single letters or simple math symbols
+        if (/^[\d\s.,+\-*/÷=²³√%₹$€()]+$/.test(trimmed)) {
+            return text;
+        }
+
+        // 1. Direct Google GTx Engine call from browser (Fastest, ~80ms, 100% Free)
+        try {
+            const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=${encodeURIComponent(targetLang)}&dt=t&q=${encodeURIComponent(trimmed)}`;
+            const res = await fetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data[0] && Array.isArray(data[0])) {
+                    const result = data[0].map(item => (item && item[0]) ? item[0] : '').join('');
+                    if (result && result.trim()) return result.trim();
+                }
+            }
+        } catch (e) {
+            // Ad-blocker or browser CORS restriction, try backend fallback
+        }
+
+        // 2. Fallback to backend /api/translate proxy
+        try {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const backendUrl = isLocal ? 'http://localhost:8000' : (window.BACKEND_URL || 'https://mock-test-backend-crqm.onrender.com');
+            const res = await fetch(`${backendUrl}/api/translate`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: trimmed, target_lang: targetLang })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data && data.translated && data.translated.trim()) {
+                    return data.translated.trim();
+                }
+            }
+        } catch (backendErr) {
+            console.warn('[Translate Proxy Failed]:', backendErr);
+        }
+
+        return text;
     }
 };
 

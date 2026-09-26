@@ -122,12 +122,18 @@ const CalcAnalytics = (() => {
         const totalFast = Object.values(topicStats).reduce((a, b) => a + b.fast, 0);
         const totalSlow = Object.values(topicStats).reduce((a, b) => a + b.slow, 0);
 
-        el('ca-total-sessions').textContent = totalSessions;
-        el('ca-total-questions').textContent = totalQ;
-        el('ca-overall-acc').textContent = `${overallAcc}%`;
-        el('ca-avg-speed').textContent = `${overallAvgSpeed}s`;
-        el('ca-fast-count').textContent = totalFast;
-        el('ca-slow-count').textContent = totalSlow;
+        const elSessions = el('ca-total-sessions');
+        if (elSessions) elSessions.textContent = totalSessions;
+        const elQ = el('ca-total-questions');
+        if (elQ) elQ.textContent = totalQ;
+        const elAcc = el('ca-overall-acc');
+        if (elAcc) elAcc.textContent = `${overallAcc}%`;
+        const elSpeed = el('ca-avg-speed');
+        if (elSpeed) elSpeed.textContent = `${overallAvgSpeed}s`;
+        const elFast = el('ca-fast-count');
+        if (elFast) elFast.textContent = totalFast;
+        const elSlow = el('ca-slow-count');
+        if (elSlow) elSlow.textContent = totalSlow;
 
         /* Topic grid */
         const grid = el('ca-topic-grid');

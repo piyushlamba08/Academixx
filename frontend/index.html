@@ -57,13 +57,12 @@
                 <button class="app-nav-link" data-tab="calc-analytics" onclick="CalcAnalytics.open();">
                     <i class="ph-bold ph-speedometer"></i> Calc Speed
                 </button>
+                <button class="app-nav-link" data-tab="syllabus" onclick="SyllabusManager.open();">
+                    <i class="ph-bold ph-book-open"></i> Syllabus
+                </button>
             </nav>
 
             <div class="header-right">
-                <div class="header-search-box">
-                    <i class="ph ph-magnifying-glass"></i>
-                    <input type="text" id="global-search-input" placeholder="Search tests, topics..." onkeyup="filterDrills(this.value)">
-                </div>
                 <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
                     <i class="ph-fill ph-moon"></i>
                 </button>
@@ -100,6 +99,10 @@
             <button class="mobile-nav-link" data-tab="calc-analytics" onclick="closeMobileDrawer(); CalcAnalytics.open();">
                 <i class="ph-bold ph-speedometer"></i>
                 <span>Calc Speed</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="syllabus" onclick="closeMobileDrawer(); SyllabusManager.open();">
+                <i class="ph-bold ph-book-open"></i>
+                <span>Syllabus</span>
             </button>
         </nav>
     </aside>
@@ -489,6 +492,34 @@
                             <span class="kpi-label">Time Invested</span>
                         </div>
                     </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-purple" id="dash-calc-questions">0</span>
+                            <span class="kpi-label">Questions Done</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap cyan"><i class="ph-bold ph-timer"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-cyan" id="dash-calc-speed">—</span>
+                            <span class="kpi-label">Avg Speed</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap orange"><i class="ph-bold ph-lightning"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-orange" id="dash-calc-fast">0</span>
+                            <span class="kpi-label">Fast Answers</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap red"><i class="ph-bold ph-warning"></i></div>
+                        <div class="kpi-info">
+                            <span class="kpi-val text-red" id="dash-calc-slow">0</span>
+                            <span class="kpi-label">Slow Answers</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Topic Mastery Grid -->
@@ -839,6 +870,10 @@
                         <div class="question-header">
                             <span id="question-number-badge">Question No. 1</span>
                             <div class="question-header-right">
+                                <button id="translate-question-btn" class="exam-translate-toggle-btn" type="button" title="Translate to Hindi">
+                                    <i class="ph-bold ph-translate"></i>
+                                    <span id="translate-btn-label">हिंदी</span>
+                                </button>
                                 <span id="question-count-badge" class="question-progress-count"></span>
                                 <button id="ribbon-palette-btn" class="exam-icon-btn" title="Open Question Palette Grid" aria-label="Question Grid">
                                     <i class="ph-bold ph-squares-four"></i>
@@ -1032,26 +1067,12 @@
             <!-- Main content -->
             <div id="ca-content" style="display:none;">
                 <!-- KPI Row -->
-                <div class="analytics-kpi-row">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap blue"><i class="ph-bold ph-clipboard-text"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-total-sessions">0</span>
-                            <span class="kpi-label">Sessions</span>
-                        </div>
-                    </div>
+                <div class="analytics-kpi-row ca-kpi-row">
                     <div class="kpi-card">
                         <div class="kpi-icon-wrap purple"><i class="ph-bold ph-question"></i></div>
                         <div class="kpi-info">
                             <span class="kpi-val" id="ca-total-questions">0</span>
                             <span class="kpi-label">Questions Done</span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrap green"><i class="ph-bold ph-check-circle"></i></div>
-                        <div class="kpi-info">
-                            <span class="kpi-val" id="ca-overall-acc">—</span>
-                            <span class="kpi-label">Overall Accuracy</span>
                         </div>
                     </div>
                     <div class="kpi-card">
@@ -1097,6 +1118,69 @@
             </div>
         </div>
 
+        <!-- Syllabus Screen -->
+        <div id="syllabus-screen" class="screen progress-screen">
+            <div class="screen-page-header">
+                <div class="page-title-wrap">
+                    <span class="page-kicker"><i class="ph-fill ph-book-open"></i> SSC Selection Tables</span>
+                    <h1>Subject Syllabus & Revision Tracker</h1>
+                    <p class="subtitle">Structured chapter roadmap with interactive R1 to R8 revision tracking and instant progress saving.</p>
+                </div>
+                <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
+                    <i class="ph-bold ph-arrow-left"></i> Home
+                </button>
+            </div>
+
+            <!-- Subject Selector & Progress Control Hub -->
+            <div class="syllabus-control-hub">
+                <div class="syllabus-hub-left">
+                    <div class="syllabus-dropdown-wrap">
+                        <label for="syllabus-subject-select"><i class="ph-bold ph-squares-four"></i> Subject:</label>
+                        <select id="syllabus-subject-select" class="modern-select syllabus-select" onchange="SyllabusManager.selectSubject(this.value)">
+                            <!-- Dynamic subject options -->
+                        </select>
+                    </div>
+
+                    <div class="syllabus-search-box">
+                        <i class="ph-bold ph-magnifying-glass"></i>
+                        <input type="text" placeholder="Search topic in subject..." oninput="SyllabusManager.setSearch(this.value)">
+                    </div>
+                </div>
+
+                <div class="syllabus-hub-right">
+                    <div class="syllabus-filter-chips">
+                        <button class="syllabus-filter-chip active" onclick="SyllabusManager.setFilter('all', this)">All</button>
+                        <button class="syllabus-filter-chip" onclick="SyllabusManager.setFilter('pending', this)">Pending</button>
+                        <button class="syllabus-filter-chip" onclick="SyllabusManager.setFilter('completed', this)">Done</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Subject Header & Progress Bar Card -->
+            <div class="syllabus-header-banner">
+                <div class="syllabus-header-info">
+                    <div class="syllabus-active-title-box">
+                        <h2 id="syllabus-active-title" class="syllabus-active-title"><i class="ph-bold ph-calculator"></i> Quantitative Aptitude</h2>
+                        <span id="syllabus-active-meta" class="syllabus-active-meta">0 of 39 Chapters Done</span>
+                    </div>
+                    <div class="syllabus-overall-stat">
+                        <span class="overall-label">Overall SSC Syllabus:</span>
+                        <span id="syllabus-overall-text" class="overall-val">0%</span>
+                    </div>
+                </div>
+                <div class="syllabus-meter-track">
+                    <div id="syllabus-active-bar" class="syllabus-meter-fill" style="width: 0%;"></div>
+                </div>
+            </div>
+
+            <!-- Table Content Card -->
+            <div class="syllabus-main-card">
+                <div id="syllabus-table-body" class="syllabus-table-body">
+                    <!-- Tables generated dynamically -->
+                </div>
+            </div>
+        </div>
+
         <!-- Confirmation Modal -->
         <div id="exit-modal" class="modal-overlay">
             <div class="modal-content">
@@ -1118,6 +1202,8 @@
     <script src="doc-shuffle.js?v=7"></script>
     <script src="progress-dashboard.js?v=7"></script>
     <script src="calc-analytics.js?v=7"></script>
+    <script src="syllabus-data.js?v=7"></script>
+    <script src="syllabus-manager.js?v=7"></script>
     <script>
         // Theme Toggle Logic
         const themeBtn = document.getElementById('theme-toggle');

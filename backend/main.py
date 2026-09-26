@@ -17,7 +17,7 @@ from graph import run_mock_pipeline
 from schemas import (
     PracticeRequest, PracticeResponse,
     TestIn, TestOut, TestQuestionOut, MistakeOut, TopicsOut, StreakOut, StreakIn,
-    ShortcutRequest, ShortcutResponse,
+    ShortcutRequest, ShortcutResponse, TranslateRequest, TranslateResponse,
 )
 import practice_generator
 import models as db_models
@@ -454,3 +454,29 @@ Return a JSON object matching this schema EXACTLY:
             key_takeaway="Check options first: if unit digits are distinct, calculation is never required!",
             target_time_seconds=12
         )
+
+
+# ── Google GTx Translation Proxy ──
+
+@app.post("/api/translate", response_model=TranslateResponse)
+def proxy_translate(req: TranslateRequest):
+    text_to_translate = req.text.strip()
+    if not text_to_translate:
+        return TranslateResponse(translated=req.text, target_lang=req.target_lang)
+
+    try:
+        import urllib.parse
+        encoded = urllib.parse.quote(text_to_translate)
+        url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl={req.target_lang}&dt=t&q={encoded}"
+        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=6)
+        if res.status_code == 200:
+            data = res.json()
+            if data and data[0] and isinstance(data[0], list):
+                translated_text = "".join([item[0] for item in data[0] if item and item[0]])
+                if translated_text:
+                    return TranslateResponse(translated=translated_text, target_lang=req.target_lang)
+    except Exception as e:
+        print(f"[Translate Proxy Error]: {e}")
+
+    return TranslateResponse(translated=req.text, target_lang=req.target_lang)
+

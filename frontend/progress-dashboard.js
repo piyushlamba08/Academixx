@@ -61,6 +61,34 @@ const ProgressDashboard = (() => {
         const dashTimeEl = byId('dash-time-spent');
         if (dashTimeEl) dashTimeEl.textContent = `${Math.round(totals.duration / 60)} mins`;
 
+        // Compute Calculation Speed Metrics for the 4 pills
+        let totalCalcQ = 0;
+        let totalCalcTime = 0;
+        let totalCalcFast = 0;
+        let totalCalcSlow = 0;
+
+        tests.forEach(test => {
+            const questions = test.questions || [];
+            questions.forEach(q => {
+                totalCalcQ++;
+                const spent = q.timeSpentSeconds || 0;
+                totalCalcTime += spent;
+                const target = 15; // default target baseline
+                if (spent > 0 && spent <= target) totalCalcFast++;
+                else if (spent > target * 1.5) totalCalcSlow++;
+            });
+        });
+
+        const avgCalcSpeed = totalCalcQ ? Math.round(totalCalcTime / totalCalcQ) : 0;
+        const qEl = byId('dash-calc-questions');
+        if (qEl) qEl.textContent = totalCalcQ;
+        const speedEl = byId('dash-calc-speed');
+        if (speedEl) speedEl.textContent = avgCalcSpeed > 0 ? `${avgCalcSpeed}s` : '—';
+        const fastEl = byId('dash-calc-fast');
+        if (fastEl) fastEl.textContent = totalCalcFast;
+        const slowEl = byId('dash-calc-slow');
+        if (slowEl) slowEl.textContent = totalCalcSlow;
+
         const topics = {};
         tests.forEach(t => { 
             const x = topics[t.topic || 'General'] || (topics[t.topic || 'General'] = { tests:0, correct:0, wrong:0, skipped:0, total:0 }); 

@@ -283,7 +283,7 @@ const CalcAnalytics = (() => {
 
         let tests = [];
         try {
-            tests = await ProgressStore.getTests();
+            tests = await ProgressStore.getTests(true);
         } catch (e) {
             console.warn('[CalcAnalytics] Could not fetch tests', e);
         }

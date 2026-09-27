@@ -4908,7 +4908,7 @@ body.dark-theme .ca-bar-track {
 }
 
 .col-status {
-    width: 48px;
+    width: 54px;
     text-align: center;
 }
 
@@ -4919,6 +4919,11 @@ body.dark-theme .ca-bar-track {
 .col-round {
     width: 58px;
     text-align: center;
+}
+
+.col-concept {
+    min-width: 110px;
+    width: 120px;
 }
 
 .topic-name-text {
@@ -5029,47 +5034,67 @@ body.dark-theme .ca-bar-track {
 
 /* Desktop vs Mobile Toggle */
 .desktop-only-table {
-    display: block;
+    display: block !important;
 }
 
 .mobile-only-cards {
-    display: none;
+    display: none !important;
 }
 
 /* Mobile Cards Styling */
 .syllabus-mobile-cards-list {
-    display: flex;
     flex-direction: column;
     gap: 0.65rem;
 }
 
 .mob-topic-card {
-    background: var(--bg-subtle);
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 14px;
-    padding: 0.85rem 0.95rem;
+    border-radius: 16px;
+    padding: 0.9rem 1rem;
     display: flex;
     flex-direction: column;
     gap: 0.65rem;
-    transition: all 0.2s ease;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .mob-topic-card.is-completed {
-    background: rgba(16, 185, 129, 0.05);
-    border-color: rgba(16, 185, 129, 0.25);
+    background: rgba(16, 185, 129, 0.04);
+    border-color: rgba(16, 185, 129, 0.3);
 }
 
 .mob-topic-header {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.75rem;
+}
+
+.apple-status-cb {
+    width: 22px;
+    height: 22px;
+}
+
+.apple-status-cb .checkmark {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-medium);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-status-cb input:checked ~ .checkmark {
+    background: #10b981;
+    border-color: #10b981;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
 }
 
 .mob-topic-title {
-    font-size: 0.92rem;
+    font-size: 0.94rem;
     font-weight: 700;
     color: var(--text-primary);
-    line-height: 1.3;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
     flex: 1;
 }
 
@@ -5078,69 +5103,237 @@ body.dark-theme .ca-bar-track {
     text-decoration: line-through;
 }
 
+/* Apple-Style Mobile Cards & Pills */
 .mob-rounds-row {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding-top: 0.4rem;
-    border-top: 1px dashed var(--border-subtle);
+    padding-top: 0.65rem;
+    border-top: 1px solid var(--border-subtle);
     overflow-x: auto;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 
 .mob-rounds-row::-webkit-scrollbar {
     display: none;
 }
 
-.mob-rounds-label {
-    font-size: 0.68rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    letter-spacing: 0.03em;
-    flex-shrink: 0;
-}
-
-.mob-rounds-pills-wrap {
+.mob-rounds-grid {
     display: flex;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.4rem;
     min-width: max-content;
+    padding: 2px 1px;
 }
 
-.mob-round-pill {
+/* Apple Round Pill Segment */
+.apple-round-pill {
     position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
-    user-select: none;
-}
-
-.mob-round-pill input {
-    position: absolute;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.mob-round-pill span {
-    font-family: var(--font-heading);
-    font-size: 0.68rem;
-    font-weight: 800;
-    color: var(--text-muted);
+    gap: 0.35rem;
     background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
-    padding: 0.2rem 0.45rem;
-    border-radius: 6px;
-    transition: all 0.15s ease;
+    padding: 0.38rem 0.65rem;
+    border-radius: 20px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
-.mob-round-pill input:checked + span,
-.mob-round-pill.checked span {
+.apple-round-pill input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+    pointer-events: none;
+}
+
+.apple-pill-tag {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+    line-height: 1;
+    transition: color 0.2s ease;
+}
+
+.apple-pill-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border-medium);
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    color: transparent;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.apple-round-pill.is-checked {
+    background: #4f46e5;
+    border-color: #4f46e5;
+    box-shadow: 0 3px 10px rgba(79, 70, 229, 0.3);
+    transform: translateY(-1px);
+}
+
+.apple-round-pill.is-checked .apple-pill-tag {
+    color: #ffffff;
+}
+
+.apple-round-pill.is-checked .apple-pill-indicator {
+    border-color: #ffffff;
+    background: #ffffff;
+    color: #4f46e5;
+}
+
+.apple-round-pill.is-concept.is-checked {
+    background: #0284c7;
+    border-color: #0284c7;
+    box-shadow: 0 3px 10px rgba(2, 132, 199, 0.3);
+}
+
+.apple-round-pill.is-concept.is-checked .apple-pill-indicator {
+    color: #0284c7;
+}
+
+/* Desktop Table Add / Undo Buttons */
+.col-add-round {
+    width: 60px;
+    text-align: center;
+}
+
+.table-actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+}
+
+.syllabus-add-round-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px dashed var(--primary);
+    background: var(--primary-light, rgba(79, 70, 229, 0.08));
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: 0;
+    padding: 0;
+}
+
+.syllabus-add-round-btn:hover {
     background: var(--primary);
-    border-color: var(--primary);
     color: #fff;
-    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.25);
+    border-style: solid;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.syllabus-undo-round-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    border: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    margin: 0;
+    padding: 0;
+}
+
+.syllabus-undo-round-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+/* Apple Add/Undo Buttons for Mobile */
+.apple-round-add-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px dashed var(--primary);
+    color: var(--primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.apple-round-add-btn:active,
+.apple-round-add-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    border-style: solid;
+    transform: scale(1.08);
+}
+
+.apple-round-undo-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.2s ease;
+}
+
+.apple-round-undo-btn:active,
+.apple-round-undo-btn:hover {
+    background: #ef4444;
+    color: #fff;
+    border-color: #ef4444;
+    transform: scale(1.08);
+}
+
+.disabled-dash {
+    color: var(--text-muted);
+    opacity: 0.4;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.max-rounds-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 2px 6px;
+    letter-spacing: 0.04em;
 }
 
 @media (max-width: 768px) {

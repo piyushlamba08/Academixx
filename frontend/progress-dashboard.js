@@ -20,19 +20,7 @@ const ProgressDashboard = (() => {
         await renderDashboard();
     }
 
-    async function openNotebook() {
-        updateNavActive('notebook');
-        QuizEngine.showScreen(byId('notebook-screen'));
-        const select = byId('notebook-topic');
-        const current = select.value || 'all';
-        renderNotebook();
-        ProgressStore.getTopics().then(topics => {
-            select.innerHTML = '<option value="all">All topics</option>' + topics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-            select.value = [...select.options].some(x => x.value === current) ? current : 'all';
-        }).catch(() => {});
-    }
-
-    /* ── Helper: Check if test is AI Mock or Document Shuffle ── */
+    /* ── Helper: Check if test / mistake is AI Mock or Document Shuffle ── */
     function isMockTestEligible(test = {}) {
         const topic = (test.topic || '').toLowerCase();
         const src = (test.sourceName || '').toLowerCase();
@@ -46,11 +34,50 @@ const ProgressDashboard = (() => {
         if (src.endsWith('.pdf') || src.endsWith('.docx') || src.includes('.pdf') || src.includes('.docx')) {
             return true;
         }
-        if (topic.includes('ai mock') || src.includes('ai mock') || topic.includes('pdf mock') || src.includes('pdf mock') || topic.includes('mock drill')) {
+        if (topic.includes('ai mock') || src.includes('ai mock') || topic.includes('pdf mock') || src.includes('pdf mock') || topic.includes('mock drill') || topic.includes('mistake')) {
             return true;
         }
 
         return false;
+    }
+
+    function isMistakeNotebookEligible(mistake = {}) {
+        const topic = (mistake.topic || '').toLowerCase();
+        // Disallow standard mental calculation topics
+        const calcTopics = [
+            'addition', 'subtraction', 'multiplication', 'division',
+            'square', 'cube', 'squareroot', 'square root', 'tables',
+            'percenttofraction', 'fractiontopercent', 'mental math',
+            'percent → fraction', 'fraction → %', 'random calculation',
+            'speed math', 'calculation'
+        ];
+        if (calcTopics.some(ct => topic === ct || topic.startsWith(ct))) {
+            return false;
+        }
+
+        // Also check if question itself is a pure mental arithmetic question
+        const q = (mistake.question || '').toLowerCase();
+        if ((q.includes('²') || q.includes('³') || q.includes('√')) && q.length < 30) {
+            return false;
+        }
+        if (/^\d+\s*[\+\-\×\÷\/\*]\s*\d+/.test(q.trim())) {
+            return false;
+        }
+
+        return true;
+    }
+
+    async function openNotebook() {
+        updateNavActive('notebook');
+        QuizEngine.showScreen(byId('notebook-screen'));
+        const select = byId('notebook-topic');
+        const current = select.value || 'all';
+        renderNotebook();
+        ProgressStore.getTopics().then(topics => {
+            const filteredTopics = topics.filter(t => isMistakeNotebookEligible({ topic: t }));
+            select.innerHTML = '<option value="all">All topics</option>' + filteredTopics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
+            select.value = [...select.options].some(x => x.value === current) ? current : 'all';
+        }).catch(() => {});
     }
 
     async function renderDashboard() {
@@ -204,7 +231,8 @@ const ProgressDashboard = (() => {
             `;
         }
 
-        const mistakes = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
+        const rawMistakes = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
+        const mistakes = rawMistakes.filter(isMistakeNotebookEligible);
         emptyEl.style.display = mistakes.length ? 'none' : 'block';
         listEl.innerHTML = mistakes.map((q, i) => {
             const isHighPriority = q.timesWrong >= 2;
@@ -316,7 +344,8 @@ const ProgressDashboard = (() => {
 
     async function practiceSingleMistake(encodedKey) {
         const key = decodeURIComponent(encodedKey);
-        const mistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: false });
+        const rawMistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: false });
+        const mistakes = rawMistakes.filter(isMistakeNotebookEligible);
         const mistake = mistakes.find(m => m.key === key);
         if (!mistake) return;
 
@@ -335,7 +364,8 @@ const ProgressDashboard = (() => {
     }
 
     async function startRetest() {
-        let questions = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
+        let rawQuestions = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
+        let questions = rawQuestions.filter(isMistakeNotebookEligible);
         if (!questions.length) return;
         questions = [...questions].sort(() => Math.random() - 0.5);
         const count = byId('retest-count').value;

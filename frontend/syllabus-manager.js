@@ -36,10 +36,10 @@ const SyllabusManager = (() => {
         if (!progress[subjectId]) progress[subjectId] = {};
         const key = getTopicKey(subjectId, topicName);
         if (!progress[subjectId][key]) progress[subjectId][key] = {};
-        
+
         progress[subjectId][key].done = isChecked;
         saveProgress(progress);
-        
+
         // Re-render UI stats and current view
         render();
     }
@@ -49,9 +49,9 @@ const SyllabusManager = (() => {
         if (!progress[subjectId]) progress[subjectId] = {};
         const key = getTopicKey(subjectId, topicName);
         if (!progress[subjectId][key]) progress[subjectId][key] = {};
-        
+
         progress[subjectId][key][roundKey] = isChecked;
-        
+
         saveProgress(progress);
         renderStats();
     }
@@ -59,7 +59,7 @@ const SyllabusManager = (() => {
     function calculateSubjectStats(subjectId) {
         const subject = typeof SYLLABUS_DATA !== 'undefined' ? SYLLABUS_DATA[subjectId] : null;
         if (!subject) return { total: 0, completed: 0, percent: 0 };
-        
+
         const progress = loadProgress()[subjectId] || {};
         let total = 0;
         let completed = 0;
@@ -175,6 +175,63 @@ const SyllabusManager = (() => {
         }
     }
 
+    function getTopicRoundCount(itemData) {
+        const count = itemData?.roundCount || 3;
+        return Math.min(Math.max(count, 3), 5);
+    }
+
+    function addNextRound(subjectId, topicName) {
+        const progress = loadProgress();
+        if (!progress[subjectId]) progress[subjectId] = {};
+        const key = getTopicKey(subjectId, topicName);
+        if (!progress[subjectId][key]) progress[subjectId][key] = {};
+
+        const currentCount = getTopicRoundCount(progress[subjectId][key]);
+        if (currentCount < 5) {
+            progress[subjectId][key].roundCount = currentCount + 1;
+            saveProgress(progress);
+            renderTopicsList();
+        }
+    }
+
+    function removeLastRound(subjectId, topicName) {
+        const progress = loadProgress();
+        if (!progress[subjectId]) return;
+        const key = getTopicKey(subjectId, topicName);
+        if (!progress[subjectId][key]) return;
+
+        const currentCount = getTopicRoundCount(progress[subjectId][key]);
+        if (currentCount > 3) {
+            const nextCount = currentCount - 1;
+            // Clean up checked states for the removed round
+            delete progress[subjectId][key][`r${currentCount}`];
+            delete progress[subjectId][key][`t${currentCount}`];
+            if (nextCount === 3) {
+                delete progress[subjectId][key].roundCount;
+            } else {
+                progress[subjectId][key].roundCount = nextCount;
+            }
+            saveProgress(progress);
+            renderTopicsList();
+        }
+    }
+
+    function resetAllExtraRounds(subjectId) {
+        const progress = loadProgress();
+        if (!progress[subjectId]) return;
+        Object.keys(progress[subjectId]).forEach(k => {
+            if (progress[subjectId][k]?.roundCount) {
+                delete progress[subjectId][k].roundCount;
+                delete progress[subjectId][k].r4;
+                delete progress[subjectId][k].t4;
+                delete progress[subjectId][k].r5;
+                delete progress[subjectId][k].t5;
+            }
+        });
+        saveProgress(progress);
+        renderTopicsList();
+    }
+
     function renderTopicsList() {
         const listContainer = document.getElementById('syllabus-table-body');
         if (!listContainer || typeof SYLLABUS_DATA === 'undefined') return;
@@ -186,7 +243,6 @@ const SyllabusManager = (() => {
         }
 
         const progress = loadProgress()[currentSubjectId] || {};
-        const rounds = ['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8'];
 
         let html = '';
         let totalRendered = 0;
@@ -206,6 +262,23 @@ const SyllabusManager = (() => {
 
             totalRendered += filteredTopics.length;
 
+            // Determine max round count across topics in this section (minimum 3, max 5)
+            let maxRoundForPart = 3;
+            filteredTopics.forEach(topic => {
+                const key = getTopicKey(currentSubjectId, topic);
+                const count = getTopicRoundCount(progress[key]);
+                if (count > maxRoundForPart) {
+                    maxRoundForPart = count;
+                }
+            });
+
+            // Build rounds columns based on maxRoundForPart
+            const columnsList = [{ key: 'concept', label: 'Concept / Video' }];
+            for (let i = 1; i <= maxRoundForPart; i++) {
+                columnsList.push({ key: `r${i}`, label: `R${i}` });
+                columnsList.push({ key: `t${i}`, label: `T${i}` });
+            }
+
             html += `
                 <div class="syllabus-part-group">
                     <div class="syllabus-part-header">
@@ -217,16 +290,10 @@ const SyllabusManager = (() => {
                         <table class="syllabus-selection-table">
                             <thead>
                                 <tr>
-                                    <th class="col-status">Done</th>
+                                    <th class="col-status">Status</th>
                                     <th class="col-topic">Subject / Topic Name</th>
-                                    <th class="col-round">R1 <small>Theory</small></th>
-                                    <th class="col-round">R2 <small>Sheet</small></th>
-                                    <th class="col-round">R3 <small>Rev</small></th>
-                                    <th class="col-round">R4 <small>Test 1</small></th>
-                                    <th class="col-round">R5 <small>Theory</small></th>
-                                    <th class="col-round">R6 <small>Sheet</small></th>
-                                    <th class="col-round">R7 <small>Rev</small></th>
-                                    <th class="col-round">R8 <small>Test 2</small></th>
+                                    ${columnsList.map(r => `<th class="col-round ${r.key === 'concept' ? 'col-concept' : ''}">${r.label}</th>`).join('')}
+                                    <th class="col-add-round">Add</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -234,25 +301,73 @@ const SyllabusManager = (() => {
                                     const key = getTopicKey(currentSubjectId, topic);
                                     const itemData = progress[key] || {};
                                     const isDone = !!itemData.done;
+                                    const topicRounds = getTopicRoundCount(itemData);
                                     const escapedTopic = topic.replace(/'/g, "\\'");
-                                    
-                                    const roundCells = rounds.map(r => {
-                                        const rKey = r.toLowerCase();
-                                        const isRoundChecked = !!itemData[rKey];
-                                        return `
-                                            <td class="col-round">
-                                                <label class="custom-checkbox-wrap round-check-wrap" title="${r} Revision">
-                                                    <input type="checkbox" ${isRoundChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', '${rKey}', this.checked)">
-                                                    <span class="checkmark"></span>
-                                                </label>
-                                            </td>
-                                        `;
+
+                                    const roundCells = columnsList.map(col => {
+                                        if (col.key === 'concept') {
+                                            const isConceptChecked = !!itemData.concept;
+                                            return `
+                                                <td class="col-round col-concept">
+                                                    <label class="custom-checkbox-wrap round-check-wrap" title="Concept / Video">
+                                                        <input type="checkbox" ${isConceptChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', 'concept', this.checked)">
+                                                        <span class="checkmark"></span>
+                                                    </label>
+                                                </td>
+                                            `;
+                                        }
+
+                                        // Extract round number from col.key (e.g. r4 -> 4)
+                                        const roundNum = parseInt(col.key.substring(1), 10);
+                                        if (roundNum <= topicRounds) {
+                                            const isChecked = !!itemData[col.key];
+                                            return `
+                                                <td class="col-round">
+                                                    <label class="custom-checkbox-wrap round-check-wrap" title="${col.label}">
+                                                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', '${col.key}', this.checked)">
+                                                        <span class="checkmark"></span>
+                                                    </label>
+                                                </td>
+                                            `;
+                                        } else {
+                                            return `<td class="col-round text-center"><span class="disabled-dash">—</span></td>`;
+                                        }
                                     }).join('');
+
+                                    const canAddMore = topicRounds < 5;
+                                    const hasExtraRounds = topicRounds > 3;
+
+                                    let actionContent = '';
+                                    if (canAddMore) {
+                                        actionContent += `
+                                            <button type="button" class="syllabus-add-round-btn" title="Add R${topicRounds + 1} & T${topicRounds + 1}" onclick="SyllabusManager.addNextRound('${currentSubjectId}', '${escapedTopic}')">
+                                                <i class="ph-bold ph-plus"></i>
+                                            </button>
+                                        `;
+                                    } else {
+                                        actionContent += `<span class="max-rounds-badge" title="Max 5 Revisions Reached">Max</span>`;
+                                    }
+
+                                    if (hasExtraRounds) {
+                                        actionContent += `
+                                            <button type="button" class="syllabus-undo-round-btn" title="Undo R${topicRounds} & T${topicRounds}" onclick="SyllabusManager.removeLastRound('${currentSubjectId}', '${escapedTopic}')">
+                                                <i class="ph-bold ph-arrow-u-up-left"></i>
+                                            </button>
+                                        `;
+                                    }
+
+                                    const addActionCell = `
+                                        <td class="col-add-round">
+                                            <div class="table-actions-cell">
+                                                ${actionContent}
+                                            </div>
+                                        </td>
+                                    `;
 
                                     return `
                                         <tr class="syllabus-topic-row ${isDone ? 'is-completed' : ''}">
                                             <td class="col-status">
-                                                <label class="custom-checkbox-wrap" title="Mark topic as done">
+                                                <label class="custom-checkbox-wrap" title="Status Done">
                                                     <input type="checkbox" ${isDone ? 'checked' : ''} onchange="SyllabusManager.toggleTopicDone('${currentSubjectId}', '${escapedTopic}', this.checked)">
                                                     <span class="checkmark"></span>
                                                 </label>
@@ -261,6 +376,7 @@ const SyllabusManager = (() => {
                                                 <span class="topic-name-text ${isDone ? 'strike' : ''}">${topic}</span>
                                             </td>
                                             ${roundCells}
+                                            ${addActionCell}
                                         </tr>
                                     `;
                                 }).join('')}
@@ -274,32 +390,59 @@ const SyllabusManager = (() => {
                             const key = getTopicKey(currentSubjectId, topic);
                             const itemData = progress[key] || {};
                             const isDone = !!itemData.done;
+                            const topicRounds = getTopicRoundCount(itemData);
                             const escapedTopic = topic.replace(/'/g, "\\'");
 
-                            const roundPills = rounds.map(r => {
-                                const rKey = r.toLowerCase();
-                                const isRoundChecked = !!itemData[rKey];
+                            // Build rounds list for this specific topic
+                            const topicCols = [{ key: 'concept', label: 'Concept / Video' }];
+                            for (let i = 1; i <= topicRounds; i++) {
+                                topicCols.push({ key: `r${i}`, label: `R${i}` });
+                                topicCols.push({ key: `t${i}`, label: `T${i}` });
+                            }
+
+                            const roundCheckboxes = topicCols.map(r => {
+                                const isRoundChecked = !!itemData[r.key];
+                                const shortLabel = r.key === 'concept' ? 'Concept' : r.label;
                                 return `
-                                    <label class="mob-round-pill ${isRoundChecked ? 'checked' : ''}">
-                                        <input type="checkbox" ${isRoundChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', '${rKey}', this.checked)">
-                                        <span>${r}</span>
+                                    <label class="apple-round-pill ${isRoundChecked ? 'is-checked' : ''} ${r.key === 'concept' ? 'is-concept' : ''}" title="${r.label}">
+                                        <input type="checkbox" ${isRoundChecked ? 'checked' : ''} onchange="SyllabusManager.toggleRound('${currentSubjectId}', '${escapedTopic}', '${r.key}', this.checked)">
+                                        <span class="apple-pill-tag">${shortLabel}</span>
+                                        <span class="apple-pill-indicator">
+                                            <i class="ph-bold ph-check"></i>
+                                        </span>
                                     </label>
                                 `;
                             }).join('');
 
+                            const canAddMoreMob = topicRounds < 5;
+                            const hasExtraRoundsMob = topicRounds > 3;
+
+                            const addBtnMob = canAddMoreMob ? `
+                                <button type="button" class="apple-round-add-btn" title="Add R${topicRounds + 1} & T${topicRounds + 1}" onclick="SyllabusManager.addNextRound('${currentSubjectId}', '${escapedTopic}')">
+                                    <i class="ph-bold ph-plus"></i>
+                                </button>
+                            ` : '';
+
+                            const undoBtnMob = hasExtraRoundsMob ? `
+                                <button type="button" class="apple-round-undo-btn" title="Undo R${topicRounds} & T${topicRounds}" onclick="SyllabusManager.removeLastRound('${currentSubjectId}', '${escapedTopic}')">
+                                    <i class="ph-bold ph-arrow-u-up-left"></i>
+                                </button>
+                            ` : '';
+
                             return `
                                 <div class="mob-topic-card ${isDone ? 'is-completed' : ''}">
                                     <div class="mob-topic-header">
-                                        <label class="custom-checkbox-wrap" title="Mark topic as done">
+                                        <label class="custom-checkbox-wrap apple-status-cb" title="Status Done">
                                             <input type="checkbox" ${isDone ? 'checked' : ''} onchange="SyllabusManager.toggleTopicDone('${currentSubjectId}', '${escapedTopic}', this.checked)">
                                             <span class="checkmark"></span>
                                         </label>
                                         <span class="mob-topic-title ${isDone ? 'strike' : ''}">${topic}</span>
                                     </div>
                                     <div class="mob-rounds-row">
-                                        <span class="mob-rounds-label">Rounds:</span>
-                                        <div class="mob-rounds-pills-wrap">
-                                            ${roundPills}
+                                        <div class="mob-rounds-grid">
+                                            ${roundCheckboxes}
+                                            ${addBtnMob}
+                                            ${undoBtnMob}
                                         </div>
                                     </div>
                                 </div>
@@ -341,6 +484,9 @@ const SyllabusManager = (() => {
         selectSubject,
         toggleTopicDone,
         toggleRound,
+        addNextRound,
+        removeLastRound,
+        resetAllExtraRounds,
         setFilter,
         setSearch,
         resetSubjectProgress

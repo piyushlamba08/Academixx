@@ -135,6 +135,7 @@
                 <div class="overview-card card-upcoming">
                     <div class="overview-card-head">
                         <span class="card-head-title">Prep Overview</span>
+                        <span class="prep-status-badge" id="prep-pace-badge"><i class="ph-bold ph-trend-up"></i> On Track</span>
                     </div>
                     <div class="overview-card-body">
                         <div class="prep-ring-wrap">
@@ -152,6 +153,22 @@
                             <p id="overview-prep-subtitle">Drill weak topics in your notebook to boost your score.</p>
                         </div>
                     </div>
+                    <div class="prep-micro-stats">
+                        <div class="prep-micro-item">
+                            <i class="ph-bold ph-target"></i>
+                            <div class="prep-micro-meta">
+                                <span class="prep-micro-val" id="prep-mastery-status">Ready</span>
+                                <span class="prep-micro-lbl">Prep Status</span>
+                            </div>
+                        </div>
+                        <div class="prep-micro-item">
+                            <i class="ph-bold ph-shield-check"></i>
+                            <div class="prep-micro-meta">
+                                <span class="prep-micro-val" id="prep-mistakes-active">0 Pending</span>
+                                <span class="prep-micro-lbl">Mistakes</span>
+                            </div>
+                        </div>
+                    </div>
                     <button class="card-action-btn resume-mistake-pill" onclick="ProgressDashboard.openNotebook()">
                         <i class="ph-bold ph-arrows-clockwise"></i> Resume Mistake Drill
                     </button>
@@ -165,32 +182,44 @@
                     </div>
                     <div class="quick-drills-grid">
                         <button class="quick-pill-card pill-math" onclick="selectOperation('addition')">
-                            <div class="quick-icon"><i class="ph-bold ph-plus"></i></div>
-                            <div class="quick-text-meta">
-                                <span>Addition</span>
-                                <small>2-Digit</small>
+                            <div class="quick-pill-left">
+                                <div class="quick-icon"><i class="ph-bold ph-plus"></i></div>
+                                <div class="quick-text-meta">
+                                    <span>Addition</span>
+                                    <small>2-Digit Sums</small>
+                                </div>
                             </div>
+                            <i class="ph-bold ph-caret-right quick-arrow"></i>
                         </button>
                         <button class="quick-pill-card pill-tables" onclick="selectOperation('tables')">
-                            <div class="quick-icon"><i class="ph-bold ph-grid-nine"></i></div>
-                            <div class="quick-text-meta">
-                                <span>Tables</span>
-                                <small>2 to 12</small>
+                            <div class="quick-pill-left">
+                                <div class="quick-icon"><i class="ph-bold ph-grid-nine"></i></div>
+                                <div class="quick-text-meta">
+                                    <span>Tables</span>
+                                    <small>2 to 12 Multiples</small>
+                                </div>
                             </div>
+                            <i class="ph-bold ph-caret-right quick-arrow"></i>
                         </button>
                         <button class="quick-pill-card pill-squares" onclick="selectOperation('square')">
-                            <div class="quick-icon"><i class="ph-bold ph-square"></i></div>
-                            <div class="quick-text-meta">
-                                <span>Squares</span>
-                                <small>1-50</small>
+                            <div class="quick-pill-left">
+                                <div class="quick-icon"><i class="ph-bold ph-square"></i></div>
+                                <div class="quick-text-meta">
+                                    <span>Squares</span>
+                                    <small>1-50 Powers</small>
+                                </div>
                             </div>
+                            <i class="ph-bold ph-caret-right quick-arrow"></i>
                         </button>
                         <button class="quick-pill-card pill-pdf" onclick="QuizEngine.showScreen(document.getElementById('pdf-screen'))">
-                            <div class="quick-icon"><i class="ph-fill ph-file-pdf"></i></div>
-                            <div class="quick-text-meta">
-                                <span>AI Mock</span>
-                                <small>Custom PDF</small>
+                            <div class="quick-pill-left">
+                                <div class="quick-icon"><i class="ph-fill ph-file-pdf"></i></div>
+                                <div class="quick-text-meta">
+                                    <span>AI Mock</span>
+                                    <small>Custom PDF Drills</small>
+                                </div>
                             </div>
+                            <i class="ph-bold ph-caret-right quick-arrow"></i>
                         </button>
                     </div>
                     <div class="quick-footer-hint">
@@ -248,10 +277,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('addition')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"><i class="ph-bold ph-plus"></i></div>
-                        <span class="drill-badge-type">Arithmetic</span>
+                        <div class="drill-title">Addition</div>
                     </div>
-                    <div class="drill-title">Addition</div>
-                    <div class="drill-desc">Fast column & row-wise sums with configurable digit lengths.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -262,10 +289,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('subtraction')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #ef4444, #b91c1c);"><i class="ph-bold ph-minus"></i></div>
-                        <span class="drill-badge-type">Arithmetic</span>
+                        <div class="drill-title">Subtraction</div>
                     </div>
-                    <div class="drill-title">Subtraction</div>
-                    <div class="drill-desc">Speed difference questions & borrowing calculation drills.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -276,10 +301,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('multiplication')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9);"><i class="ph-bold ph-x"></i></div>
-                        <span class="drill-badge-type">Arithmetic</span>
+                        <div class="drill-title">Multiplication</div>
                     </div>
-                    <div class="drill-title">Multiplication</div>
-                    <div class="drill-desc">Cross-products, big multiplication & speed recall drills.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -290,10 +313,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('division')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #f97316, #c2410c);"><i class="ph-bold ph-divide"></i></div>
-                        <span class="drill-badge-type">Arithmetic</span>
+                        <div class="drill-title">Division</div>
                     </div>
-                    <div class="drill-title">Division</div>
-                    <div class="drill-desc">Clean quotient & integer division drills under time pressure.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -304,10 +325,8 @@
                 <div class="drill-card" data-cat="powers" onclick="selectOperation('square')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #10b981, #047857);"><i class="ph-fill ph-square"></i></div>
-                        <span class="drill-badge-type">Powers</span>
+                        <div class="drill-title">Squares (1 - 50)</div>
                     </div>
-                    <div class="drill-title">Squares (1 - 50)</div>
-                    <div class="drill-desc">Instant recall for quantitative comparison & simplification.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -318,10 +337,8 @@
                 <div class="drill-card" data-cat="powers" onclick="selectOperation('cube')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #14b8a6, #0f766e);"><i class="ph-fill ph-cube"></i></div>
-                        <span class="drill-badge-type">Powers</span>
+                        <div class="drill-title">Cubes (1 - 20)</div>
                     </div>
-                    <div class="drill-title">Cubes (1 - 20)</div>
-                    <div class="drill-desc">Cube values memory drills for high-speed calculation.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -332,10 +349,8 @@
                 <div class="drill-card" data-cat="powers" onclick="selectOperation('squareRoot')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #06b6d4, #0e7490);"><i class="ph-bold ph-radical"></i></div>
-                        <span class="drill-badge-type">Roots</span>
+                        <div class="drill-title">Roots</div>
                     </div>
-                    <div class="drill-title">Roots</div>
-                    <div class="drill-desc">Perfect square roots identification & rapid estimation.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -346,10 +361,8 @@
                 <div class="drill-card" data-cat="tables" onclick="selectOperation('tables')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #6366f1, #4338ca);"><i class="ph-bold ph-grid-nine"></i></div>
-                        <span class="drill-badge-type">Tables</span>
+                        <div class="drill-title">Tables</div>
                     </div>
-                    <div class="drill-title">Tables</div>
-                    <div class="drill-desc">Custom table range drills (2 to 30) for sharp mental arithmetic.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -360,10 +373,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('random')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #64748b, #334155);"><i class="ph-bold ph-shuffle"></i></div>
-                        <span class="drill-badge-type">Mixed</span>
+                        <div class="drill-title">Mixed</div>
                     </div>
-                    <div class="drill-title">Mixed</div>
-                    <div class="drill-desc">BODMAS equations, multi-operator questions & speed drills.</div>
                     <div class="drill-action-row">
                         <span>Start Test</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -374,10 +385,8 @@
                 <div class="drill-card featured-ai-card" data-cat="ai" onclick="QuizEngine.showScreen(document.getElementById('pdf-screen'))">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #ec4899, #be185d);"><i class="ph-fill ph-file-pdf"></i></div>
-                        <span class="drill-badge-type is-ai"><i class="ph-fill ph-sparkle"></i> AI Mock</span>
+                        <div class="drill-title">PDF Mock</div>
                     </div>
-                    <div class="drill-title">PDF Mock</div>
-                    <div class="drill-desc">Upload study materials or question banks to generate custom exams.</div>
                     <div class="drill-action-row">
                         <span>Upload & Generate</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -388,10 +397,8 @@
                 <div class="drill-card" data-cat="ai" onclick="QuizEngine.showScreen(document.getElementById('doc-shuffle-screen'))">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #0ea5e9, #0369a1);"><i class="ph-bold ph-shuffle"></i></div>
-                        <span class="drill-badge-type" style="background: rgba(14,165,233,0.1); color:#0ea5e9;"><i class="ph-bold ph-file-doc"></i> No AI</span>
+                        <div class="drill-title">Shuffle Drill</div>
                     </div>
-                    <div class="drill-title">Shuffle Drill</div>
-                    <div class="drill-desc">Upload your question paper — exact questions extracted & shuffled. No AI, no changes, just your original questions in a new order.</div>
                     <div class="drill-action-row">
                         <span>Upload & Shuffle</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -402,10 +409,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('percentToFraction')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #ec4899, #be185d);"><i class="ph-bold ph-percent"></i></div>
-                        <span class="drill-badge-type">Conversion</span>
+                        <div class="drill-title">% → Fraction</div>
                     </div>
-                    <div class="drill-title">% → Fraction</div>
-                    <div class="drill-desc">Convert common exam percentages to their fraction equivalents at speed.</div>
                     <div class="drill-action-row">
                         <span>Start Drill</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -416,10 +421,8 @@
                 <div class="drill-card" data-cat="arithmetic" onclick="selectOperation('fractionToPercent')">
                     <div class="drill-card-top">
                         <div class="drill-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="ph-bold ph-arrows-left-right"></i></div>
-                        <span class="drill-badge-type">Conversion</span>
+                        <div class="drill-title">Fraction → %</div>
                     </div>
-                    <div class="drill-title">Fraction → %</div>
-                    <div class="drill-desc">Convert fractions to their percentage equivalents — a must-have for bank exams.</div>
                     <div class="drill-action-row">
                         <span>Start Drill</span>
                         <i class="ph-bold ph-arrow-right"></i>
@@ -1246,12 +1249,16 @@
         // Catalog Filter Tabs
         function filterCatalog(category, btn) {
             document.querySelectorAll('.cat-filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if (btn) btn.classList.add('active');
             
             const cards = document.querySelectorAll('.drill-card');
             cards.forEach(card => {
+                card.classList.remove('anim-filter-in');
                 if (category === 'all' || card.dataset.cat === category) {
                     card.style.display = 'flex';
+                    // Force reflow and re-apply quick smooth animation
+                    void card.offsetWidth;
+                    card.classList.add('anim-filter-in');
                 } else {
                     card.style.display = 'none';
                 }
@@ -1337,6 +1344,28 @@
 
             const mistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: true });
             if (mistakesEl) mistakesEl.textContent = mistakes.length;
+
+            const prepMasteryEl = document.getElementById('prep-mastery-status');
+            const prepMistakesEl = document.getElementById('prep-mistakes-active');
+            const prepPaceEl = document.getElementById('prep-pace-badge');
+
+            if (prepMasteryEl) {
+                if (!tests.length) prepMasteryEl.textContent = 'Beginner';
+                else if (accuracyPct >= 90) prepMasteryEl.textContent = 'Mastery';
+                else if (accuracyPct >= 75) prepMasteryEl.textContent = 'Advanced';
+                else if (accuracyPct >= 50) prepMasteryEl.textContent = 'Intermediate';
+                else prepMasteryEl.textContent = 'Needs Practice';
+            }
+            if (prepMistakesEl) {
+                prepMistakesEl.textContent = `${mistakes.length} Active`;
+            }
+            if (prepPaceEl) {
+                if (accuracyPct >= 80) {
+                    prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> High Pace';
+                } else {
+                    prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> On Track';
+                }
+            }
         }
 
         document.addEventListener('DOMContentLoaded', refreshHomeStats);

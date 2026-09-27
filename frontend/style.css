@@ -512,17 +512,33 @@ body.dark-theme .welcome-banner-card {
 
 .live-indicator i { font-size: 0.5rem; }
 
+.prep-status-badge {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--color-green, #10b981);
+    background: rgba(16, 185, 129, 0.1);
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
 /* Prep Ring - Apple Style Donut */
 .overview-card-body {
     display: flex;
     align-items: center;
     gap: 1.25rem;
-    margin-bottom: 1.25rem;
+    margin-bottom: 0.9rem;
+    padding: 0.75rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
 }
 
 .prep-ring-wrap {
-    width: 84px;
-    height: 84px;
+    width: 80px;
+    height: 80px;
     position: relative;
     display: flex;
     align-items: center;
@@ -596,6 +612,55 @@ body.dark-theme .prep-ring-bg-track {
     line-height: 1.4;
 }
 
+/* Prep Micro Stats Strip (Apple Widget Style Dual Badge) */
+.prep-micro-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.65rem;
+    margin-bottom: 0.9rem;
+}
+
+.prep-micro-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    padding: 0.6rem 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    transition: all 0.2s ease;
+}
+
+.prep-micro-item:hover {
+    border-color: var(--primary);
+    transform: translateY(-1px);
+}
+
+.prep-micro-item i {
+    font-size: 1.15rem;
+    color: var(--primary);
+    flex-shrink: 0;
+}
+
+.prep-micro-meta {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.prep-micro-val {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.prep-micro-lbl {
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 1px;
+}
+
 .card-action-btn {
     width: 100%;
     display: flex;
@@ -631,99 +696,204 @@ body.dark-theme .prep-ring-bg-track {
     background: var(--bg-surface);
 }
 
-/* Quick Pills Grid */
+/* Quick Pills Grid (Modern Apple Style Tiles) */
 .quick-drills-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
-    margin-bottom: 1rem;
+    gap: 0.85rem;
+    margin-bottom: 1.1rem;
 }
 
 .quick-pill-card {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 0.75rem 0.85rem;
-    background: var(--bg-subtle);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    background: var(--bg-surface);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
+    border-radius: 14px;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     text-align: left;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+}
+
+.quick-pill-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
 }
 
 .quick-pill-card:hover {
     border-color: var(--primary);
     background: var(--bg-surface);
     transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.quick-pill-card .quick-arrow {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    transition: transform 0.2s ease, color 0.2s ease;
+    margin-left: 0.25rem;
+}
+
+.quick-pill-card:hover .quick-arrow {
+    color: var(--primary);
+    transform: translateX(3px);
 }
 
 .quick-icon {
-    width: 28px;
-    height: 28px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 11px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.95rem;
+    font-size: 1.2rem;
     color: #ffffff;
-    margin-bottom: 0.4rem;
+    flex-shrink: 0;
+    margin-bottom: 0;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
-.pill-math .quick-icon { background: #3b82f6; }
-.pill-tables .quick-icon { background: #6366f1; }
-.pill-squares .quick-icon { background: #10b981; }
-.pill-pdf .quick-icon { background: #ec4899; }
-
-.quick-pill-card span {
-    font-size: 0.82rem;
-    font-weight: 700;
-    color: var(--text-primary);
+.pill-math {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), var(--bg-surface));
+}
+.pill-math .quick-icon { 
+    background: linear-gradient(135deg, #3b82f6, #2563eb); 
+    box-shadow: 0 3px 8px rgba(37, 99, 235, 0.3);
 }
 
-.quick-pill-card small {
-    font-size: 0.68rem;
-    color: var(--text-muted);
+.pill-tables {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.06), var(--bg-surface));
+}
+.pill-tables .quick-icon { 
+    background: linear-gradient(135deg, #6366f1, #4f46e5); 
+    box-shadow: 0 3px 8px rgba(79, 70, 229, 0.3);
 }
 
-.quick-footer-hint {
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
+.pill-squares {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), var(--bg-surface));
+}
+.pill-squares .quick-icon { 
+    background: linear-gradient(135deg, #10b981, #059669); 
+    box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
 }
 
-/* Scoreboard Modern 2x2 Grid */
-.scoreboard-modern-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
-    margin-bottom: 1rem;
+.pill-pdf {
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.06), var(--bg-surface));
+}
+.pill-pdf .quick-icon { 
+    background: linear-gradient(135deg, #ec4899, #db2777); 
+    box-shadow: 0 3px 8px rgba(236, 72, 153, 0.3);
 }
 
-.sb-stat-box {
-    background: var(--bg-subtle);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    padding: 0.75rem 0.85rem;
+.quick-text-meta {
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    line-height: 1.25;
 }
 
-.sb-val {
-    font-family: var(--font-mono);
-    font-size: 1.4rem;
+.quick-pill-card span {
+    font-size: 0.92rem;
     font-weight: 700;
     color: var(--text-primary);
     line-height: 1.2;
 }
 
-.sb-label {
-    font-size: 0.72rem;
+.quick-pill-card small {
+    font-size: 0.74rem;
     font-weight: 600;
     color: var(--text-muted);
-    margin-top: 0.2rem;
+    margin-top: 3px;
+}
+
+.quick-footer-hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding-top: 0.2rem;
+}
+
+/* Scoreboard Modern 2x2 Grid (Apple Widget Style) */
+.scoreboard-modern-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 1.1rem;
+}
+
+.sb-stat-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+.sb-stat-box:hover {
+    border-color: var(--primary);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+}
+
+.sb-stat-box:nth-child(1) {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03), var(--bg-surface));
+}
+
+.sb-stat-box:nth-child(2) {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), var(--bg-surface));
+}
+
+.sb-stat-box:nth-child(3) {
+    background: linear-gradient(135deg, rgba(249, 115, 22, 0.05), var(--bg-surface));
+}
+
+.sb-stat-box:nth-child(4) {
+    background: linear-gradient(135deg, rgba(168, 85, 247, 0.05), var(--bg-surface));
+}
+
+.sb-val {
+    font-family: var(--font-heading);
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+}
+
+.sb-val.text-blue {
+    color: #3b82f6;
+}
+
+.sb-val.text-orange {
+    color: #f97316;
+}
+
+.sb-val.text-purple {
+    color: #a855f7;
+}
+
+.sb-label {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
 }
 
 /* ============================================================
@@ -780,28 +950,52 @@ body.dark-theme .prep-ring-bg-track {
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
 }
 
-/* Drills Grid */
+/* Drills Grid (Strict 5-Columns Grid for PC) */
 .drills-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.85rem;
+    align-content: start;
+}
+
+@media (min-width: 769px) {
+    .drills-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+        min-height: 380px; /* Maintains constant page height strictly on PC/Desktop */
+    }
 }
 
 .drill-card {
     background: var(--card-bg);
     border: 1px solid var(--card-border);
     border-radius: 16px;
-    padding: 1.4rem;
+    padding: 1rem 1rem 0.9rem;
     box-shadow: var(--card-shadow);
     cursor: pointer;
     transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
     position: relative;
+    min-width: 0; /* Prevents overflow from children */
+}
+
+.drill-card.anim-filter-in {
+    animation: filterCardIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes filterCardIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.94) translateY(6px);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
 }
 
 .drill-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     box-shadow: var(--card-shadow-hover);
     border-color: rgba(99, 102, 241, 0.4);
 }
@@ -809,61 +1003,55 @@ body.dark-theme .prep-ring-bg-track {
 .drill-card-top {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
 }
 
 .drill-icon {
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     border-radius: 12px;
     color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.25rem;
+    font-size: 1.2rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+    flex-shrink: 0;
 }
 
 .drill-badge-type {
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: var(--text-muted);
-    background: var(--bg-subtle);
-    padding: 0.2rem 0.55rem;
-    border-radius: 6px;
-}
-
-.drill-badge-type.is-ai {
-    background: rgba(236, 72, 153, 0.1);
-    color: #ec4899;
+    display: none !important; /* Removed category badge for clean look */
 }
 
 .drill-title {
     font-family: var(--font-heading);
-    font-size: 1.15rem;
+    font-size: 1.05rem;
     font-weight: 700;
     color: var(--text-primary);
-    margin-bottom: 0.4rem;
+    margin-bottom: 0;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
 }
 
 .drill-desc {
-    font-size: 0.84rem;
-    color: var(--text-secondary);
-    line-height: 1.45;
-    margin-bottom: 1.25rem;
-    flex: 1;
+    display: none !important; /* Removed redundant long paragraph text for clean Apple look */
 }
 
 .drill-action-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding-top: 0.85rem;
+    padding-top: 0.75rem;
     border-top: 1px solid var(--border-subtle);
     font-size: 0.82rem;
     font-weight: 700;
     color: var(--primary);
+    margin-top: auto;
     transition: color 0.2s ease;
 }
 

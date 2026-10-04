@@ -136,19 +136,51 @@ const ProgressStore = (() => {
         return merged;
     }
 
+    const MISTAKE_TAGS_KEY = 'academix_mistake_tags';
+
+    function getMistakeTags() {
+        try {
+            return JSON.parse(localStorage.getItem(MISTAKE_TAGS_KEY) || '{}');
+        } catch {
+            return {};
+        }
+    }
+
+    function setMistakeTag(key, tag) {
+        try {
+            const tags = getMistakeTags();
+            if (tag) {
+                tags[key] = tag;
+            } else {
+                delete tags[key];
+            }
+            localStorage.setItem(MISTAKE_TAGS_KEY, JSON.stringify(tags));
+            cache.mistakes = {};
+            return tags;
+        } catch (e) {
+            console.warn('[ProgressStore] Could not save mistake tag', e);
+            return {};
+        }
+    }
+
     async function getMistakes({ topic = 'all', activeOnly = true } = {}, forceRefresh = false) {
         const cacheKey = `${topic}_${activeOnly}`;
-        if (!forceRefresh && cache.mistakes[cacheKey]) return cache.mistakes[cacheKey];
+        const tags = getMistakeTags();
+        if (!forceRefresh && cache.mistakes[cacheKey]) {
+            return cache.mistakes[cacheKey].map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+        }
         try {
             const params = new URLSearchParams({ topic, activeOnly });
             const res = await fetch(`${API_BASE}/mistakes?${params.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch mistakes');
             const data = await res.json();
-            cache.mistakes[cacheKey] = data;
-            return data;
+            const enriched = data.map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            cache.mistakes[cacheKey] = enriched;
+            return enriched;
         } catch (e) {
             console.error(e);
-            return cache.mistakes[cacheKey] || [];
+            const fallback = cache.mistakes[cacheKey] || [];
+            return fallback.map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
         }
     }
 
@@ -198,5 +230,5 @@ const ProgressStore = (() => {
         }
     }
 
-    return { saveTest, getTests, getMistakes, getTopics, getBestStreak, updateBestStreak, invalidateCache };
+    return { saveTest, getTests, getMistakes, getTopics, getBestStreak, updateBestStreak, invalidateCache, getMistakeTags, setMistakeTag };
 })();

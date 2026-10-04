@@ -75,14 +75,7 @@ const ProgressDashboard = (() => {
     async function openNotebook() {
         updateNavActive('notebook');
         QuizEngine.showScreen(byId('notebook-screen'));
-        const select = byId('notebook-topic');
-        const current = select.value || 'all';
         renderNotebook();
-        ProgressStore.getTopics().then(topics => {
-            const filteredTopics = topics.filter(t => isMistakeNotebookEligible({ topic: t }));
-            select.innerHTML = '<option value="all">All topics</option>' + filteredTopics.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join('');
-            select.value = [...select.options].some(x => x.value === current) ? current : 'all';
-        }).catch(() => {});
     }
 
     async function renderDashboard() {
@@ -320,6 +313,101 @@ const ProgressDashboard = (() => {
         });
     }
 
+    function detectSubject(topic = '') {
+        const t = (topic || '').toLowerCase();
+        if (t.startsWith('maths') || t.includes('maths')) return 'Maths';
+        if (t.startsWith('reasoning') || t.includes('reasoning')) return 'Reasoning';
+        if (t.startsWith('gk') || t.startsWith('gs') || t.includes('gk') || t.includes('general awareness') || t.includes('general studies')) return 'GK/GS';
+        if (t.startsWith('english') || t.includes('english')) return 'English';
+
+        const reasoningKeywords = ['calendar', 'clock', 'coding', 'decoding', 'syllogism', 'blood', 'relation', 'direction', 'analogy', 'series', 'dice', 'cube', 'mirror', 'paper', 'seating', 'venn', 'matrix', 'puzzle', 'classification', 'order and ranking', 'ranking'];
+        if (reasoningKeywords.some(k => t.includes(k))) return 'Reasoning';
+
+        const gkKeywords = ['history', 'polity', 'geography', 'biology', 'chemistry', 'physics', 'economics', 'static_gk', 'static gk', 'current affairs', 'monument', 'dance', 'festival', 'constitution', 'amendment', 'mughal', 'vedic', 'indus'];
+        if (gkKeywords.some(k => t.includes(k))) return 'GK/GS';
+
+        const englishKeywords = ['vocab', 'grammar', 'comprehension', 'synonym', 'antonym', 'idiom', 'phrase', 'cloze', 'error spotting', 'one word', 'spelling', 'active passive', 'narration'];
+        if (englishKeywords.some(k => t.includes(k))) return 'English';
+
+        const mathsKeywords = ['percentage', 'ratio', 'proportion', 'profit', 'loss', 'discount', 'simple interest', 'compound interest', 'time and work', 'pipe', 'cistern', 'speed', 'distance', 'train', 'boat', 'stream', 'average', 'mixture', 'alligation', 'algebra', 'trigonometry', 'height', 'geometry', 'mensuration', 'number system', 'hcf', 'lcm', 'simplification', 'coordinate', 'partnership', 'data interpretation', 'si & ci', 'si and ci'];
+        if (mathsKeywords.some(k => t.includes(k))) return 'Maths';
+
+        return 'Maths';
+    }
+
+    function extractCleanTopic(topic = '') {
+        if (!topic) return 'General';
+        return topic.replace(/^(Maths|Reasoning|GK\/GS|English|History|Polity|Geography|Biology|Chemistry|Physics|Economics|Static_GK)\s*[—-]\s*/i, '').trim() || topic;
+    }
+
+    function assignMistakeTag(encodedKey, tag) {
+        const key = decodeURIComponent(encodedKey);
+        const newTag = tag ? tag : null;
+        ProgressStore.setMistakeTag(key, newTag);
+
+        // Update tag in memory
+        const m = currentVisibleMistakes.find(x => x.key === key);
+        if (m) m.mistakeTag = newTag;
+
+        // Re-render to update counts and filtered cards
+        renderNotebook();
+    }
+
+    function renderMistakeTagPill(key, tag) {
+        const encodedKey = encodeURIComponent(key);
+        return `
+            <select class="mistake-card-tag-select ${tag ? 'tagged-' + tag : 'untagged'}" 
+                    title="Mistake Type - click to change"
+                    onchange="ProgressDashboard.assignMistakeTag('${encodedKey}', this.value)">
+                <option value="" ${!tag ? 'selected' : ''}>${tag ? '⚪ Untag' : '+ Tag'}</option>
+                <option value="reading" ${tag === 'reading' ? 'selected' : ''}>📖 Reading</option>
+                <option value="calc" ${tag === 'calc' ? 'selected' : ''}>✍️ Calc Slip</option>
+                <option value="concept" ${tag === 'concept' ? 'selected' : ''}>🧠 Concept</option>
+                <option value="trap" ${tag === 'trap' ? 'selected' : ''}>🪤 Trap</option>
+                <option value="panic" ${tag === 'panic' ? 'selected' : ''}>⏱️ Panic</option>
+            </select>
+        `;
+    }
+
+    function filterByTagFromPanel(tag) {
+        const tagSelect = byId('notebook-mistake-tag');
+        if (!tagSelect) return;
+        if (tagSelect.value === tag) {
+            tagSelect.value = 'all';
+        } else {
+            tagSelect.value = tag;
+        }
+        renderNotebook();
+    }
+
+    function filterByTopicFromPanel(topicName) {
+        const topicSelect = byId('notebook-topic');
+        if (!topicSelect) return;
+        if (topicSelect.value.toLowerCase() === topicName.toLowerCase()) {
+            topicSelect.value = 'all';
+        } else {
+            const match = [...topicSelect.options].find(o => o.value.toLowerCase() === topicName.toLowerCase());
+            if (match) topicSelect.value = match.value;
+            else topicSelect.value = topicName;
+        }
+        renderNotebook();
+    }
+
+    function setSubjectFilter(subject) {
+        const subSelect = byId('notebook-subject-select');
+        if (subSelect) subSelect.value = subject;
+        document.querySelectorAll('#notebook-subject-pills .sub-pill').forEach(btn => {
+            if (btn.dataset.subject.toLowerCase() === subject.toLowerCase()) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        const topicSelect = byId('notebook-topic');
+        if (topicSelect) topicSelect.value = 'all';
+        renderNotebook();
+    }
+
     async function renderNotebook() {
         const listEl = byId('notebook-list');
         const emptyEl = byId('notebook-empty');
@@ -336,28 +424,134 @@ const ProgressDashboard = (() => {
             `;
         }
 
-        const rawMistakes = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
+        const rawMistakes = await ProgressStore.getMistakes({ topic: 'all' });
         const mistakes = rawMistakes.filter(isMistakeNotebookEligible);
-        currentVisibleMistakes = mistakes;
+        
+        mistakes.forEach(m => {
+            m.subject = detectSubject(m.topic);
+            m.cleanTopic = extractCleanTopic(m.topic);
+        });
+
+        // Current filter values
+        const currentSub = byId('notebook-subject-select')?.value || 'all';
+        const currentTopic = byId('notebook-topic')?.value || 'all';
+        const currentTagFilter = byId('notebook-mistake-tag')?.value || 'all';
+
+        // Sync subject pills
+        document.querySelectorAll('#notebook-subject-pills .sub-pill').forEach(btn => {
+            if (btn.dataset.subject.toLowerCase() === currentSub.toLowerCase()) {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+
+        // 1. Subject filtered subset (for topic dropdown & diagnostics panel)
+        const subjectMistakes = currentSub === 'all' ? mistakes : mistakes.filter(m => m.subject === currentSub);
+
+        // Update Diagnostics Total Badge
+        const totalBadgeEl = byId('analytics-total-badge');
+        if (totalBadgeEl) {
+            totalBadgeEl.textContent = `${subjectMistakes.length} Mistake${subjectMistakes.length !== 1 ? 's' : ''}`;
+        }
+
+        // Count tags for diagnostics
+        const tagCounts = { reading: 0, calc: 0, concept: 0, trap: 0, panic: 0 };
+        subjectMistakes.forEach(m => {
+            if (m.mistakeTag && tagCounts[m.mistakeTag] !== undefined) {
+                tagCounts[m.mistakeTag]++;
+            }
+        });
+
+        const elR = byId('diag-count-reading'); if (elR) elR.textContent = tagCounts.reading;
+        const elC = byId('diag-count-calc'); if (elC) elC.textContent = tagCounts.calc;
+        const elK = byId('diag-count-concept'); if (elK) elK.textContent = tagCounts.concept;
+        const elT = byId('diag-count-trap'); if (elT) elT.textContent = tagCounts.trap;
+        const elP = byId('diag-count-panic'); if (elP) elP.textContent = tagCounts.panic;
+
+        // Highlight active tag chip in panel if filter active
+        document.querySelectorAll('.diag-chip').forEach(chip => {
+            const cTag = chip.dataset.tag;
+            if (currentTagFilter === cTag) chip.classList.add('active');
+            else chip.classList.remove('active');
+        });
+
+        // Topic breakdown counts for current subject
+        const topicCounts = {};
+        subjectMistakes.forEach(m => {
+            const top = m.cleanTopic || 'General';
+            topicCounts[top] = (topicCounts[top] || 0) + 1;
+        });
+        const sortedTopics = Object.entries(topicCounts).sort((a, b) => b[1] - a[1]);
+
+        // Render topic breakdown pills in top panel
+        const topicChipsEl = byId('analytics-topic-chips');
+        if (topicChipsEl) {
+            if (!sortedTopics.length) {
+                topicChipsEl.innerHTML = '<span style="color:var(--text-secondary);font-size:0.82rem;">No mistakes in this subject! 🎉</span>';
+            } else {
+                topicChipsEl.innerHTML = sortedTopics.map(([topName, cnt]) => {
+                    const isTopActive = (currentTopic !== 'all' && currentTopic.toLowerCase() === topName.toLowerCase());
+                    return `
+                    <button type="button" class="topic-diag-pill ${isTopActive ? 'active' : ''}" onclick="ProgressDashboard.filterByTopicFromPanel('${escapeHtml(topName)}')">
+                        <span>${escapeHtml(topName)}</span>
+                        <span class="pill-cnt">${cnt}</span>
+                    </button>`;
+                }).join('');
+            }
+        }
+
+        // Populate #notebook-topic select with counts
+        const topicSelect = byId('notebook-topic');
+        if (topicSelect) {
+            let optionsHtml = `<option value="all">All topics (${subjectMistakes.length})</option>`;
+            sortedTopics.forEach(([topName, cnt]) => {
+                optionsHtml += `<option value="${escapeHtml(topName)}">${escapeHtml(topName)} (${cnt})</option>`;
+            });
+            topicSelect.innerHTML = optionsHtml;
+            if (currentTopic && [...topicSelect.options].some(o => o.value === currentTopic)) {
+                topicSelect.value = currentTopic;
+            } else {
+                topicSelect.value = 'all';
+            }
+        }
+
+        // 2. Filter visible mistakes
+        let visibleMistakes = subjectMistakes;
+        if (topicSelect && topicSelect.value !== 'all') {
+            const selTop = topicSelect.value.toLowerCase();
+            visibleMistakes = visibleMistakes.filter(m => (m.cleanTopic || '').toLowerCase() === selTop || (m.topic || '').toLowerCase().includes(selTop));
+        }
+
+        if (currentTagFilter !== 'all') {
+            if (currentTagFilter === 'untagged') {
+                visibleMistakes = visibleMistakes.filter(m => !m.mistakeTag);
+            } else {
+                visibleMistakes = visibleMistakes.filter(m => m.mistakeTag === currentTagFilter);
+            }
+        }
+
+        currentVisibleMistakes = visibleMistakes;
 
         // Keep only selected keys that are in visible mistakes
-        const visibleKeySet = new Set(mistakes.map(m => m.key));
+        const visibleKeySet = new Set(visibleMistakes.map(m => m.key));
         for (const k of selectedMistakeKeys) {
             if (!visibleKeySet.has(k)) selectedMistakeKeys.delete(k);
         }
 
-        emptyEl.style.display = mistakes.length ? 'none' : 'block';
+        emptyEl.style.display = visibleMistakes.length ? 'none' : 'block';
         if (toolbarEl) {
-            toolbarEl.style.display = mistakes.length ? 'flex' : 'none';
+            toolbarEl.style.display = visibleMistakes.length ? 'flex' : 'none';
         }
         const visibleCountEl = byId('visible-mistakes-count');
-        if (visibleCountEl) visibleCountEl.textContent = mistakes.length;
+        if (visibleCountEl) visibleCountEl.textContent = visibleMistakes.length;
 
-        listEl.innerHTML = mistakes.map((q, i) => {
+        listEl.innerHTML = visibleMistakes.map((q, i) => {
             const isHighPriority = q.timesWrong >= 2;
             const priorityBadge = isHighPriority ? '<span class="mistake-badge priority-high">High Priority</span>' : '<span class="mistake-badge priority-mid">Review Needed</span>';
             const topicLabel = q.topic ? `#${q.topic}` : '#Practice';
             const isSelected = selectedMistakeKeys.has(q.key);
+            const tag = q.mistakeTag;
 
             return `
             <div class="modern-mistake-card ${isSelected ? 'card-selected' : ''}" id="mistake-card-${i}">
@@ -372,6 +566,7 @@ const ProgressDashboard = (() => {
                         ${priorityBadge}
                     </div>
                     <div class="mistake-top-actions">
+                        ${renderMistakeTagPill(q.key, tag)}
                         <button class="ai-trick-btn" onclick="ProgressDashboard.showAiTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}', '${encodeURIComponent(q.topic || '')}')">
                             <i class="ph-fill ph-lightning"></i> Trick
                         </button>
@@ -490,11 +685,10 @@ const ProgressDashboard = (() => {
     }
 
     async function startRetest() {
-        let rawQuestions = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
-        let questions = rawQuestions.filter(isMistakeNotebookEligible);
+        let questions = currentVisibleMistakes;
         if (!questions.length) return;
         questions = [...questions].sort(() => Math.random() - 0.5);
-        const count = byId('retest-count').value;
+        const count = byId('retest-count')?.value || '10';
         if (count !== 'all') questions = questions.slice(0, Number(count));
         QuizEngine.state.negativeMarking = false;
         QuizEngine.state.timerMode = 'stopwatch';
@@ -505,16 +699,24 @@ const ProgressDashboard = (() => {
             userAnswer: null 
         })), 0, { 
             trackProgress: true, 
-            topic: byId('notebook-topic').value === 'all' ? 'Mistake Revision' : byId('notebook-topic').value, 
+            topic: byId('notebook-topic')?.value === 'all' ? 'Mistake Revision' : byId('notebook-topic')?.value, 
             sourceName: 'Mistake Notebook Retest' 
         });
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        byId('notebook-subject-select')?.addEventListener('change', (e) => setSubjectFilter(e.target.value));
         byId('notebook-topic')?.addEventListener('change', renderNotebook);
+        byId('notebook-mistake-tag')?.addEventListener('change', renderNotebook);
         byId('start-retest-btn')?.addEventListener('click', startRetest);
         byId('select-all-mistakes-cb')?.addEventListener('change', (e) => toggleSelectAll(e.target.checked));
         byId('practice-selected-btn')?.addEventListener('click', practiceSelectedMistakes);
+
+        document.querySelectorAll('#notebook-subject-pills .sub-pill').forEach(btn => {
+            btn.addEventListener('click', () => {
+                setSubjectFilter(btn.dataset.subject);
+            });
+        });
     });
 
     return { 
@@ -528,6 +730,10 @@ const ProgressDashboard = (() => {
         updateNavActive,
         toggleMistakeSelect,
         toggleSelectAll,
-        practiceSelectedMistakes
+        practiceSelectedMistakes,
+        assignMistakeTag,
+        filterByTagFromPanel,
+        filterByTopicFromPanel,
+        setSubjectFilter
     };
 })();

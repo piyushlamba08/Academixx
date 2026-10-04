@@ -560,22 +560,101 @@
                 </button>
             </div>
 
+            <!-- Mistake Analytics & Diagnostics Panel -->
+            <div class="mistake-analytics-card" id="mistake-analytics-panel">
+                <div class="analytics-card-header">
+                    <div class="analytics-header-title">
+                        <i class="ph-fill ph-chart-pie-slice"></i>
+                        <span>Mistake Diagnostics</span>
+                        <span class="analytics-total-badge" id="analytics-total-badge">0 Mistakes</span>
+                    </div>
+                    <div class="subject-toggle-pill-group" id="notebook-subject-pills">
+                        <button type="button" class="sub-pill active" data-subject="all">All</button>
+                        <button type="button" class="sub-pill" data-subject="Maths"><i class="ph-bold ph-calculator"></i> Maths</button>
+                        <button type="button" class="sub-pill" data-subject="Reasoning"><i class="ph-bold ph-brain"></i> Reasoning</button>
+                        <button type="button" class="sub-pill" data-subject="GK/GS"><i class="ph-bold ph-globe-hemisphere-east"></i> GK/GS</button>
+                        <button type="button" class="sub-pill" data-subject="English"><i class="ph-bold ph-book-open"></i> English</button>
+                    </div>
+                </div>
+
+                <!-- 5 Error Type Diagnosis Chips -->
+                <div class="analytics-tag-row" id="analytics-tag-chips">
+                    <button type="button" class="diag-chip diag-reading" data-tag="reading" onclick="ProgressDashboard.filterByTagFromPanel('reading')">
+                        <span class="diag-icon">📖</span>
+                        <span class="diag-name">Reading</span>
+                        <strong class="diag-count" id="diag-count-reading">0</strong>
+                    </button>
+                    <button type="button" class="diag-chip diag-calc" data-tag="calc" onclick="ProgressDashboard.filterByTagFromPanel('calc')">
+                        <span class="diag-icon">✍️</span>
+                        <span class="diag-name">Calc Slip</span>
+                        <strong class="diag-count" id="diag-count-calc">0</strong>
+                    </button>
+                    <button type="button" class="diag-chip diag-concept" data-tag="concept" onclick="ProgressDashboard.filterByTagFromPanel('concept')">
+                        <span class="diag-icon">🧠</span>
+                        <span class="diag-name">Concept</span>
+                        <strong class="diag-count" id="diag-count-concept">0</strong>
+                    </button>
+                    <button type="button" class="diag-chip diag-trap" data-tag="trap" onclick="ProgressDashboard.filterByTagFromPanel('trap')">
+                        <span class="diag-icon">🪤</span>
+                        <span class="diag-name">Trap</span>
+                        <strong class="diag-count" id="diag-count-trap">0</strong>
+                    </button>
+                    <button type="button" class="diag-chip diag-panic" data-tag="panic" onclick="ProgressDashboard.filterByTagFromPanel('panic')">
+                        <span class="diag-icon">⏱️</span>
+                        <span class="diag-name">Panic</span>
+                        <strong class="diag-count" id="diag-count-panic">0</strong>
+                    </button>
+                </div>
+
+                <!-- Topic Breakdown Heatmap List -->
+                <div class="analytics-topic-breakdown-wrap" id="analytics-topic-wrap">
+                    <div class="topic-breakdown-label">
+                        <span><i class="ph-bold ph-lightning"></i> Chapter Breakdown (Click to filter):</span>
+                    </div>
+                    <div class="analytics-topic-chips" id="analytics-topic-chips">
+                        <!-- Dynamic topic pills rendered here -->
+                    </div>
+                </div>
+            </div>
+
             <!-- Retest & Filter Controls Bar -->
             <div class="notebook-action-bar">
                 <div class="filter-controls-left">
                     <div class="control-field">
-                        <label for="notebook-topic"><i class="ph-bold ph-funnel"></i> Filter Topic</label>
+                        <label for="notebook-subject-select"><i class="ph-bold ph-books"></i> Subject</label>
+                        <select id="notebook-subject-select" class="modern-select">
+                            <option value="all">All Subjects</option>
+                            <option value="Maths">Maths</option>
+                            <option value="Reasoning">Reasoning</option>
+                            <option value="GK/GS">GK / GS</option>
+                            <option value="English">English</option>
+                        </select>
+                    </div>
+                    <div class="control-field">
+                        <label for="notebook-topic"><i class="ph-bold ph-funnel"></i> Topic</label>
                         <select id="notebook-topic" class="modern-select">
                             <option value="all">All topics</option>
                         </select>
                     </div>
                     <div class="control-field">
+                        <label for="notebook-mistake-tag"><i class="ph-bold ph-tag"></i> Mistake Type</label>
+                        <select id="notebook-mistake-tag" class="modern-select">
+                            <option value="all">All Mistake Types</option>
+                            <option value="reading">📖 Reading Error</option>
+                            <option value="calc">✍️ Calc / Copy Slip</option>
+                            <option value="concept">🧠 Concept Blank</option>
+                            <option value="trap">🪤 Option Trap</option>
+                            <option value="panic">⏱️ Time Panic</option>
+                            <option value="untagged">⚪ Untagged</option>
+                        </select>
+                    </div>
+                    <div class="control-field">
                         <label for="retest-count"><i class="ph-bold ph-list-numbers"></i> Batch Size</label>
                         <select id="retest-count" class="modern-select">
-                            <option value="10">10 random questions</option>
-                            <option value="20">20 random questions</option>
-                            <option value="50">50 random questions</option>
-                            <option value="all">All active mistakes</option>
+                            <option value="10">10 random</option>
+                            <option value="20">20 random</option>
+                            <option value="50">50 random</option>
+                            <option value="all">All visible</option>
                         </select>
                     </div>
                 </div>
@@ -1091,6 +1170,7 @@
                             <tr>
                                 <th>Question</th>
                                 <th>Result</th>
+                                <th>Mistake Tag</th>
                                 <th>Time Spent</th>
                                 <th>Speed Rating</th>
                                 <th>Correct Answer</th>

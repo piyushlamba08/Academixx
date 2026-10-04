@@ -693,9 +693,28 @@ const QuizEngine = {
             ? `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-lightning"></i> Trick</button>`
             : '<span class="skipped-answer">—</span>';
 
+        const mistakeKey = `${(q.question || '').trim()}|${(q.correctAnswer || '').trim()}`.toLowerCase();
+        const currentTags = (typeof ProgressStore !== 'undefined' && ProgressStore.getMistakeTags) ? ProgressStore.getMistakeTags() : {};
+        const currentTag = currentTags[mistakeKey] || '';
+        
+        const showTag = (result === 'Wrong' || result === 'Skipped');
+        const tagCellHtml = showTag ? `
+            <select class="review-tag-select ${currentTag ? 'tagged-' + currentTag : ''}" 
+                    data-key="${encodeURIComponent(mistakeKey)}"
+                    title="Tag your mistake type"
+                    onchange="QuizEngine.setMistakeTagFromReview(this, '${encodeURIComponent(mistakeKey)}')">
+                <option value="" ${!currentTag ? 'selected' : ''}>🏷️ Tag Error...</option>
+                <option value="reading" ${currentTag === 'reading' ? 'selected' : ''}>📖 Reading</option>
+                <option value="calc" ${currentTag === 'calc' ? 'selected' : ''}>✍️ Calc Slip</option>
+                <option value="concept" ${currentTag === 'concept' ? 'selected' : ''}>🧠 Concept</option>
+                <option value="trap" ${currentTag === 'trap' ? 'selected' : ''}>🪤 Trap</option>
+                <option value="panic" ${currentTag === 'panic' ? 'selected' : ''}>⏱️ Panic</option>
+            </select>` : '<span class="tag-not-applicable">—</span>';
+
         const cells = [
             `Q${number}: ${this.formatMathText(q.question)}`,
             `<span class="${resultClass}">${result}</span>`,
+            tagCellHtml,
             time,
             speedBadge,
             correctAnswerDisplay,
@@ -706,7 +725,7 @@ const QuizEngine = {
             const td = document.createElement('td');
             td.innerHTML = value;
             if (index === 1) td.className = resultClass;
-            if (index === 4) td.className = 'correct-answer';
+            if (index === 5) td.className = 'correct-answer';
             tr.appendChild(td);
         });
 
@@ -716,7 +735,7 @@ const QuizEngine = {
         const trickTr = document.createElement('tr');
         trickTr.className = 'review-trick-row';
         trickTr.style.display = 'none';
-        trickTr.innerHTML = `<td colspan="6" class="review-trick-cell"></td>`;
+        trickTr.innerHTML = `<td colspan="7" class="review-trick-cell"></td>`;
         this.els.reviewTableBody.appendChild(trickTr);
 
         // Mobile Accordion Dropdown Card
@@ -760,12 +779,32 @@ const QuizEngine = {
                             <span class="acc-detail-label">Speed Rating</span>
                             <div class="acc-speed-wrap">${speedBadge}</div>
                         </div>
+                        ${showTag ? `
+                        <div class="review-acc-detail-item review-acc-tag-item">
+                            <span class="acc-detail-label">Mistake Tag</span>
+                            <div class="acc-tag-wrap">${tagCellHtml}</div>
+                        </div>` : ''}
                     </div>
                     <div class="review-acc-trick-content" style="display: none;"></div>
                 </div>
             `;
             this.els.reviewMobileAccordion.appendChild(card);
         }
+    },
+
+    setMistakeTagFromReview(selectEl, encodedKey) {
+        const key = decodeURIComponent(encodedKey);
+        const tag = selectEl.value || null;
+        if (typeof ProgressStore !== 'undefined' && ProgressStore.setMistakeTag) {
+            ProgressStore.setMistakeTag(key, tag);
+        }
+        selectEl.className = `review-tag-select ${tag ? 'tagged-' + tag : ''}`;
+        document.querySelectorAll(`.review-tag-select[data-key="${encodedKey}"]`).forEach(el => {
+            if (el !== selectEl) {
+                el.value = tag || '';
+                el.className = `review-tag-select ${tag ? 'tagged-' + tag : ''}`;
+            }
+        });
     },
 
     async showReviewTrickMobile(btn, qTextEnc, ansEnc) {
@@ -911,7 +950,7 @@ const QuizEngine = {
         document.getElementById('stat-skipped').textContent = test.skippedCount;
         document.getElementById('stat-accuracy').textContent = `${Math.round(test.correctCount / test.total * 100)}%`;
         document.getElementById('stat-time').textContent = `${Math.floor(test.durationSeconds / 60)}:${String(test.durationSeconds % 60).padStart(2, '0')}`;
-        test.questions.forEach(q => this.appendReviewRow({ ...q, isCorrect: q.result === 'correct' }, q.number));
+        test.questions.forEach((q, idx) => this.appendReviewRow({ ...q, isCorrect: q.result === 'correct' }, q.number || idx + 1));
         this.showScreen(this.els.resultScreen);
     },
 

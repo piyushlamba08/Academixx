@@ -94,16 +94,19 @@ const ProgressDashboard = (() => {
         byId('dashboard-content').style.display = tests.length ? 'block' : 'none';
         if (!tests.length) return;
 
-        const totals = tests.reduce((a, t) => ({ 
-            tests: a.tests + 1, 
-            correct: a.correct + t.correctCount, 
-            wrong: a.wrong + t.wrongCount, 
-            skipped: a.skipped + t.skippedCount, 
-            total: a.total + t.total,
-            duration: a.duration + (t.durationSeconds || 0)
-        }), { tests:0, correct:0, wrong:0, skipped:0, total:0, duration:0 });
+        const totals = tests.reduce((a, t) => {
+            const totalQ = Number(t.total) || (Array.isArray(t.questions) ? t.questions.length : 0) || ((Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0)) || 0;
+            return { 
+                tests: a.tests + 1, 
+                correct: a.correct + (Number(t.correctCount) || 0), 
+                wrong: a.wrong + (Number(t.wrongCount) || 0), 
+                skipped: a.skipped + (Number(t.skippedCount) || 0), 
+                total: a.total + totalQ,
+                duration: a.duration + (Number(t.durationSeconds) || 0)
+            };
+        }, { tests:0, correct:0, wrong:0, skipped:0, total:0, duration:0 });
 
-        const accuracyPct = totals.total ? Math.round((totals.correct / totals.total) * 100) : 0;
+        const accuracyPct = totals.total > 0 ? Math.min(100, Math.round((totals.correct / totals.total) * 100)) : 0;
 
         byId('dash-tests').textContent = totals.tests;
         byId('dash-correct').textContent = totals.correct;
@@ -147,16 +150,18 @@ const ProgressDashboard = (() => {
 
         const topics = {};
         tests.forEach(t => { 
+            const totalQ = Number(t.total) || (Array.isArray(t.questions) ? t.questions.length : 0) || ((Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0)) || 0;
             const x = topics[t.topic || 'General'] || (topics[t.topic || 'General'] = { tests:0, correct:0, wrong:0, skipped:0, total:0 }); 
             x.tests++; 
-            x.correct += t.correctCount; 
-            x.wrong += t.wrongCount; 
-            x.skipped += t.skippedCount; 
-            x.total += t.total; 
+            x.correct += (Number(t.correctCount) || 0); 
+            x.wrong += (Number(t.wrongCount) || 0); 
+            x.skipped += (Number(t.skippedCount) || 0); 
+            x.total += totalQ; 
         });
 
         byId('topic-summary').innerHTML = Object.entries(topics).map(([topic, x]) => {
-            const acc = Math.round((x.correct / (x.total || 1)) * 100);
+            const effectiveTotal = x.total > 0 ? x.total : ((x.correct + x.wrong + x.skipped) || 0);
+            const acc = effectiveTotal > 0 ? Math.min(100, Math.round((x.correct / effectiveTotal) * 100)) : 0;
             let badgeClass = 'status-good';
             if (acc < 50) badgeClass = 'status-bad';
             else if (acc < 75) badgeClass = 'status-mid';
@@ -174,14 +179,16 @@ const ProgressDashboard = (() => {
                     <div class="topic-progress-fill" style="width: ${acc}%"></div>
                 </div>
                 <div class="topic-stats-footer">
-                    <span><b>${x.tests}</b> test${x.tests > 1 ? 's' : ''} (${x.total} Qs)</span>
+                    <span><b>${x.tests}</b> test${x.tests > 1 ? 's' : ''} (${effectiveTotal} Qs)</span>
                     <span><i class="ph-bold ph-check text-green"></i> ${x.correct} &nbsp; <i class="ph-bold ph-x text-red"></i> ${x.wrong}</span>
                 </div>
             </div>`;
         }).join('');
 
         byId('test-history').innerHTML = tests.map(t => {
-            const acc = t.total ? Math.round((t.correctCount / t.total) * 100) : 0;
+            const totalQ = Number(t.total) || (Array.isArray(t.questions) ? t.questions.length : 0) || ((Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0)) || 0;
+            const correct = Number(t.correctCount) || 0;
+            const acc = totalQ > 0 ? Math.min(100, Math.round((correct / totalQ) * 100)) : 0;
             const topicName = escapeHtml(t.topic || 'Mock Drill');
             const dateStr = formatDate(t.completedAt);
             const timeStr = formatTime(t.durationSeconds);
@@ -200,13 +207,13 @@ const ProgressDashboard = (() => {
                         <div class="history-meta-badges">
                             <span class="meta-chip"><i class="ph-bold ph-calendar-blank"></i> ${dateStr}</span>
                             <span class="meta-chip"><i class="ph-bold ph-timer"></i> ${timeStr}</span>
-                            <span class="meta-chip"><i class="ph-bold ph-list-numbers"></i> ${t.total} Qs</span>
+                            <span class="meta-chip"><i class="ph-bold ph-list-numbers"></i> ${totalQ} Qs</span>
                         </div>
                     </div>
                 </div>
                 <div class="history-right">
                     <div class="history-score-col">
-                        <div class="history-score-val"><b>${t.correctCount}</b><span class="history-score-total">/${t.total}</span></div>
+                        <div class="history-score-val"><b>${correct}</b><span class="history-score-total">/${totalQ}</span></div>
                         <span class="history-acc-pill ${accClass}">${acc}%</span>
                     </div>
                     <i class="ph-bold ph-caret-right history-arrow"></i>

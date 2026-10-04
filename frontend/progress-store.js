@@ -18,9 +18,34 @@ const ProgressStore = (() => {
 
     const LOCAL_KEY = 'academix_tests_backup';
 
+    function computeTestTotal(t) {
+        if (!t) return 0;
+        const total = Number(t.total);
+        if (Number.isFinite(total) && total > 0) return total;
+        if (Array.isArray(t.questions) && t.questions.length > 0) return t.questions.length;
+        const sum = (Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0);
+        return sum > 0 ? sum : 0;
+    }
+
     function getLocalTests() {
         try {
-            return JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+            const list = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
+            let changed = false;
+            const sanitized = list.map(t => {
+                if (!t) return t;
+                const total = computeTestTotal(t);
+                if (t.total !== total) {
+                    changed = true;
+                    return { ...t, total };
+                }
+                return t;
+            });
+            if (changed) {
+                try {
+                    localStorage.setItem(LOCAL_KEY, JSON.stringify(sanitized));
+                } catch {}
+            }
+            return sanitized;
         } catch {
             return [];
         }
@@ -29,11 +54,12 @@ const ProgressStore = (() => {
     function saveLocalTest(test) {
         try {
             const list = getLocalTests();
-            // ensure unique id and completedAt timestamp
+            const total = computeTestTotal(test);
             const enriched = {
                 id: test.id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
                 completedAt: test.completedAt || new Date().toISOString(),
-                ...test
+                ...test,
+                total
             };
             list.unshift(enriched);
             localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
@@ -47,18 +73,20 @@ const ProgressStore = (() => {
     async function saveTest(testData) {
         invalidateCache();
         // 1. Immediately store in localStorage so data is 100% safe locally
-        const localSaved = saveLocalTest(testData);
+        const total = computeTestTotal(testData);
+        const enrichedData = { ...testData, total };
+        const localSaved = saveLocalTest(enrichedData);
 
         // 2. Sync to backend database
         try {
             const res = await fetch(`${API_BASE}/tests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(testData)
+                body: JSON.stringify(enrichedData)
             });
             if (!res.ok) throw new Error('Failed to save test to remote');
             const data = await res.json();
-            return data;
+            return { ...data, total: computeTestTotal(data) || total };
         } catch (e) {
             console.warn('[ProgressStore] Remote save failed, using local backup', e);
             return localSaved;
@@ -82,11 +110,25 @@ const ProgressStore = (() => {
         const mergedMap = new Map();
 
         // Add local first
-        localTests.forEach(t => { if (t && t.id) mergedMap.set(t.id, t); });
+        localTests.forEach(t => { 
+            if (t && t.id) {
+                mergedMap.set(t.id, { ...t, total: computeTestTotal(t) }); 
+            }
+        });
         // Add remote (overwrites matching ids with canonical remote version)
-        remoteTests.forEach(t => { if (t && t.id) mergedMap.set(t.id, t); });
+        remoteTests.forEach(t => { 
+            if (t && t.id) {
+                mergedMap.set(t.id, { ...t, total: computeTestTotal(t) }); 
+            }
+        });
 
-        const merged = Array.from(mergedMap.values());
+        const merged = Array.from(mergedMap.values()).map(t => ({
+            ...t,
+            correctCount: Number(t.correctCount) || 0,
+            wrongCount: Number(t.wrongCount) || 0,
+            skippedCount: Number(t.skippedCount) || 0,
+            total: computeTestTotal(t)
+        }));
         // Sort descending by completedAt
         merged.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
 

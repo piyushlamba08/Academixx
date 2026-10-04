@@ -611,12 +611,14 @@ const QuizEngine = {
 
         if (this.state.testMeta?.trackProgress) {
             const scoredQuestions = this.state.questions.filter(q => q.isScored !== false);
+            const totalCount = scoredQuestions.length || total;
             // await nahi — background mein save hoga, UI block nahi hogi
             ProgressStore.saveTest({
                 topic: this.state.testMeta.topic,
                 sourceName: this.state.testMeta.sourceName,
                 durationSeconds: Math.max(0, timeUsed),
                 score, correctCount, wrongCount, skippedCount,
+                total: totalCount,
                 questions: scoredQuestions
             }).then(saved => { this.state.savedTest = saved; }).catch(() => {});
         }

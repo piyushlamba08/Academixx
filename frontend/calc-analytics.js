@@ -53,6 +53,11 @@ const CalcAnalytics = (() => {
             return false;
         }
 
+        // 3. Exclude Reasoning, Subject-tagged tests, and Mistake drills
+        if (topic.startsWith('reasoning') || topic.includes('—') || topic.includes(' - ') || src.includes('mistake') || topic.includes('mistake')) {
+            return false;
+        }
+
         return true;
     }
 

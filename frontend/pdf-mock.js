@@ -75,6 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
         els.errorMsg.classList.add('active');
     }
 
+    // Subject toggle — PDF Mock
+    document.querySelectorAll('#pdf-subject-group .mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#pdf-subject-group .mode-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
     // Custom timer toggle — PDF Mock
     document.querySelectorAll('#pdf-duration-group .mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -148,11 +156,15 @@ document.addEventListener('DOMContentLoaded', () => {
             els.generateBtn.disabled = false;
 
             QuizEngine.state.negativeMarking = document.getElementById('pdf-negative').checked;
-            QuizEngine.state.timerMode = 'countdown';
+            const activeSubBtn = document.querySelector('#pdf-subject-group .mode-btn.active');
+            const subject = activeSubBtn ? (activeSubBtn.dataset.subject || activeSubBtn.textContent.trim()) : 'Maths';
+            const topicInput = document.getElementById('pdf-topic-input');
+            const rawTopic = topicInput ? topicInput.value.trim() : '';
+            const finalTopic = rawTopic ? `${subject} — ${rawTopic}` : `${subject} Drill`;
 
             QuizEngine.startQuiz(formattedQuestions, durationMinutes, {
                 trackProgress: true,
-                topic: document.getElementById('pdf-topic').value,
+                topic: finalTopic,
                 sourceName: selectedFile.name
             });
 

@@ -38,6 +38,11 @@ const ProgressDashboard = (() => {
             return true;
         }
 
+        // 3. Subject-based tests (Maths, Reasoning, custom topic)
+        if (topic.startsWith('maths') || topic.startsWith('reasoning') || topic.includes('—') || topic.includes(' - ')) {
+            return true;
+        }
+
         return false;
     }
 
@@ -217,13 +222,106 @@ const ProgressDashboard = (() => {
         QuizEngine.showStoredResult(test);
     }
 
+    let selectedMistakeKeys = new Set();
+    let currentVisibleMistakes = [];
+
+    function updateSelectionUI() {
+        const count = selectedMistakeKeys.size;
+        const btn = byId('practice-selected-btn');
+        const btnCount = byId('selected-btn-count');
+        const badge = byId('selection-count-badge');
+        const selectAllCb = byId('select-all-mistakes-cb');
+
+        if (btnCount) btnCount.textContent = count;
+        if (btn) btn.disabled = count === 0;
+
+        if (badge) {
+            if (count > 0) {
+                badge.textContent = `${count} selected`;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        if (selectAllCb) {
+            const totalVisible = currentVisibleMistakes.length;
+            if (totalVisible > 0 && count === totalVisible) {
+                selectAllCb.checked = true;
+                selectAllCb.indeterminate = false;
+            } else if (count > 0 && count < totalVisible) {
+                selectAllCb.checked = false;
+                selectAllCb.indeterminate = true;
+            } else {
+                selectAllCb.checked = false;
+                selectAllCb.indeterminate = false;
+            }
+        }
+    }
+
+    function toggleMistakeSelect(encodedKey, isChecked) {
+        const key = decodeURIComponent(encodedKey);
+        if (isChecked) {
+            selectedMistakeKeys.add(key);
+        } else {
+            selectedMistakeKeys.delete(key);
+        }
+
+        document.querySelectorAll('.modern-mistake-card').forEach(card => {
+            const cb = card.querySelector('.mistake-select-cb');
+            if (cb && cb.dataset.key === encodedKey) {
+                if (isChecked) card.classList.add('card-selected');
+                else card.classList.remove('card-selected');
+            }
+        });
+
+        updateSelectionUI();
+    }
+
+    function toggleSelectAll(isChecked) {
+        currentVisibleMistakes.forEach(m => {
+            if (isChecked) selectedMistakeKeys.add(m.key);
+            else selectedMistakeKeys.delete(m.key);
+        });
+
+        document.querySelectorAll('.modern-mistake-card').forEach(card => {
+            const cb = card.querySelector('.mistake-select-cb');
+            if (cb) cb.checked = isChecked;
+            if (isChecked) card.classList.add('card-selected');
+            else card.classList.remove('card-selected');
+        });
+
+        updateSelectionUI();
+    }
+
+    async function practiceSelectedMistakes() {
+        if (!selectedMistakeKeys.size) return;
+        const selectedMistakes = currentVisibleMistakes.filter(m => selectedMistakeKeys.has(m.key));
+        if (!selectedMistakes.length) return;
+
+        QuizEngine.state.negativeMarking = false;
+        QuizEngine.state.timerMode = 'stopwatch';
+        QuizEngine.startQuiz(selectedMistakes.map(q => ({
+            question: q.question,
+            options: q.options || [],
+            correctAnswer: q.correctAnswer,
+            userAnswer: null
+        })), 0, {
+            trackProgress: true,
+            topic: 'Selected Mistakes Revision',
+            sourceName: `Mistake Practice (${selectedMistakes.length} Qs)`
+        });
+    }
+
     async function renderNotebook() {
         const listEl = byId('notebook-list');
         const emptyEl = byId('notebook-empty');
+        const toolbarEl = byId('notebook-selection-toolbar');
         
         // Show shimmer skeleton while loading
         if (listEl && listEl.children.length === 0) {
             emptyEl.style.display = 'none';
+            if (toolbarEl) toolbarEl.style.display = 'none';
             listEl.innerHTML = `
                 <div class="skeleton-mistake-card"><div class="skeleton-shimmer"></div></div>
                 <div class="skeleton-mistake-card"><div class="skeleton-shimmer"></div></div>
@@ -233,16 +331,35 @@ const ProgressDashboard = (() => {
 
         const rawMistakes = await ProgressStore.getMistakes({ topic: byId('notebook-topic').value });
         const mistakes = rawMistakes.filter(isMistakeNotebookEligible);
+        currentVisibleMistakes = mistakes;
+
+        // Keep only selected keys that are in visible mistakes
+        const visibleKeySet = new Set(mistakes.map(m => m.key));
+        for (const k of selectedMistakeKeys) {
+            if (!visibleKeySet.has(k)) selectedMistakeKeys.delete(k);
+        }
+
         emptyEl.style.display = mistakes.length ? 'none' : 'block';
+        if (toolbarEl) {
+            toolbarEl.style.display = mistakes.length ? 'flex' : 'none';
+        }
+        const visibleCountEl = byId('visible-mistakes-count');
+        if (visibleCountEl) visibleCountEl.textContent = mistakes.length;
+
         listEl.innerHTML = mistakes.map((q, i) => {
             const isHighPriority = q.timesWrong >= 2;
             const priorityBadge = isHighPriority ? '<span class="mistake-badge priority-high">High Priority</span>' : '<span class="mistake-badge priority-mid">Review Needed</span>';
             const topicLabel = q.topic ? `#${q.topic}` : '#Practice';
+            const isSelected = selectedMistakeKeys.has(q.key);
 
             return `
-            <div class="modern-mistake-card" id="mistake-card-${i}">
+            <div class="modern-mistake-card ${isSelected ? 'card-selected' : ''}" id="mistake-card-${i}">
                 <div class="mistake-card-top">
                     <div class="mistake-header-left">
+                        <label class="mistake-select-label" title="Select question for retest">
+                            <input type="checkbox" class="mistake-select-cb" data-key="${encodeURIComponent(q.key)}" ${isSelected ? 'checked' : ''} onchange="ProgressDashboard.toggleMistakeSelect('${encodeURIComponent(q.key)}', this.checked)">
+                            <span class="custom-cb-box"></span>
+                        </label>
                         <span class="mistake-q-badge"><i class="ph-fill ph-x-circle"></i> Q${i+1}</span>
                         <span class="mistake-topic-tag">${escapeHtml(topicLabel)}</span>
                         ${priorityBadge}
@@ -273,6 +390,8 @@ const ProgressDashboard = (() => {
                 </div>
             </div>`;
         }).join('');
+
+        updateSelectionUI();
     }
 
     async function showAiTrick(btn, qTextEnc, ansEnc, topicEnc) {
@@ -387,7 +506,21 @@ const ProgressDashboard = (() => {
     document.addEventListener('DOMContentLoaded', () => {
         byId('notebook-topic')?.addEventListener('change', renderNotebook);
         byId('start-retest-btn')?.addEventListener('click', startRetest);
+        byId('select-all-mistakes-cb')?.addEventListener('change', (e) => toggleSelectAll(e.target.checked));
+        byId('practice-selected-btn')?.addEventListener('click', practiceSelectedMistakes);
     });
 
-    return { open, openTest, openNotebook, renderDashboard, renderNotebook, practiceSingleMistake, showAiTrick, updateNavActive };
+    return { 
+        open, 
+        openTest, 
+        openNotebook, 
+        renderDashboard, 
+        renderNotebook, 
+        practiceSingleMistake, 
+        showAiTrick, 
+        updateNavActive,
+        toggleMistakeSelect,
+        toggleSelectAll,
+        practiceSelectedMistakes
+    };
 })();

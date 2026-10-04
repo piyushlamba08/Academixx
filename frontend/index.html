@@ -579,9 +579,26 @@
                         </select>
                     </div>
                 </div>
-                <button id="start-retest-btn" class="primary-btn start-retest-btn">
-                    <i class="ph-bold ph-play"></i> Start Revision Retest
+                <button id="start-retest-btn" class="secondary-btn start-retest-btn">
+                    <i class="ph-bold ph-shuffle"></i> Random Batch Retest
                 </button>
+            </div>
+
+            <!-- Specific Question Selection Toolbar -->
+            <div class="notebook-selection-toolbar" id="notebook-selection-toolbar">
+                <div class="selection-tools-left">
+                    <label class="select-all-label" title="Select / Deselect all visible questions">
+                        <input type="checkbox" id="select-all-mistakes-cb">
+                        <span class="custom-cb-box"></span>
+                        <span class="select-all-text">Select All (<span id="visible-mistakes-count">0</span>)</span>
+                    </label>
+                    <span class="selection-count-badge" id="selection-count-badge" style="display:none;">0 selected</span>
+                </div>
+                <div class="selection-tools-right">
+                    <button id="practice-selected-btn" class="primary-btn practice-selected-btn" disabled>
+                        <i class="ph-bold ph-play"></i> Practice Selected (<span id="selected-btn-count">0</span>)
+                    </button>
+                </div>
             </div>
 
             <div id="notebook-empty" class="progress-empty">
@@ -727,23 +744,34 @@
             </div>
 
             <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="col" style="flex: 1.2;">
-                    <label for="pdf-topic">Quantitative Topic</label>
-                    <select id="pdf-topic" class="modern-select">
-                        <option value="Percentage">Percentage</option>
-                        <option value="Profit & Loss">Profit &amp; Loss</option>
-                        <option value="Simple & Compound Interest">Simple &amp; Compound Interest</option>
-                        <option value="Ratio & Proportion">Ratio &amp; Proportion</option>
-                        <option value="Average">Average</option>
-                        <option value="Time & Work">Time &amp; Work</option>
-                        <option value="Time, Speed & Distance">Time, Speed &amp; Distance</option>
-                        <option value="Number System">Number System</option>
-                        <option value="Algebra">Algebra</option>
-                        <option value="Mensuration">Mensuration</option>
-                        <option value="Data Interpretation">Data Interpretation</option>
-                        <option value="Mixture & Alligation">Mixture &amp; Alligation</option>
-                        <option value="Other">Other</option>
-                    </select>
+                <div class="col" style="flex: 1.3;">
+                    <label><i class="ph-bold ph-books"></i> Subject</label>
+                    <div class="difficulty-modes" id="pdf-subject-group" style="margin-bottom: 0.75rem;">
+                        <button type="button" class="mode-btn active" data-subject="Maths"><i class="ph-bold ph-calculator"></i> Maths</button>
+                        <button type="button" class="mode-btn" data-subject="Reasoning"><i class="ph-bold ph-brain"></i> Reasoning</button>
+                    </div>
+                    <label for="pdf-topic-input"><i class="ph-bold ph-tag"></i> Topic Name</label>
+                    <input type="text" id="pdf-topic-input" list="pdf-topic-suggestions" class="modern-input" placeholder="e.g. Percentage, Calendar, Series..." style="width: 100%;">
+                    <datalist id="pdf-topic-suggestions">
+                        <option value="Percentage">
+                        <option value="Profit & Loss">
+                        <option value="Simple & Compound Interest">
+                        <option value="Ratio & Proportion">
+                        <option value="Average">
+                        <option value="Time & Work">
+                        <option value="Time, Speed & Distance">
+                        <option value="Number System">
+                        <option value="Algebra">
+                        <option value="Mensuration">
+                        <option value="Calendar">
+                        <option value="Clock">
+                        <option value="Coding-Decoding">
+                        <option value="Blood Relation">
+                        <option value="Syllogism">
+                        <option value="Direction Sense">
+                        <option value="Series">
+                        <option value="Analogy">
+                    </datalist>
                 </div>
                 <div class="col" style="flex: 1;">
                     <label>Exam Duration</label>
@@ -813,7 +841,36 @@
             </div>
 
             <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="col" style="flex: 1.5;">
+                <div class="col" style="flex: 1.3;">
+                    <label><i class="ph-bold ph-books"></i> Subject</label>
+                    <div class="difficulty-modes" id="doc-shuffle-subject-group" style="margin-bottom: 0.75rem;">
+                        <button type="button" class="mode-btn active" data-subject="Maths"><i class="ph-bold ph-calculator"></i> Maths</button>
+                        <button type="button" class="mode-btn" data-subject="Reasoning"><i class="ph-bold ph-brain"></i> Reasoning</button>
+                    </div>
+                    <label for="doc-shuffle-topic-input"><i class="ph-bold ph-tag"></i> Topic Name</label>
+                    <input type="text" id="doc-shuffle-topic-input" list="doc-shuffle-topic-suggestions" class="modern-input" placeholder="e.g. Calendar, Percentage, Coding-Decoding..." style="width: 100%;">
+                    <datalist id="doc-shuffle-topic-suggestions">
+                        <option value="Percentage">
+                        <option value="Profit & Loss">
+                        <option value="Simple & Compound Interest">
+                        <option value="Ratio & Proportion">
+                        <option value="Average">
+                        <option value="Time & Work">
+                        <option value="Time, Speed & Distance">
+                        <option value="Number System">
+                        <option value="Algebra">
+                        <option value="Mensuration">
+                        <option value="Calendar">
+                        <option value="Clock">
+                        <option value="Coding-Decoding">
+                        <option value="Blood Relation">
+                        <option value="Syllogism">
+                        <option value="Direction Sense">
+                        <option value="Series">
+                        <option value="Analogy">
+                    </datalist>
+                </div>
+                <div class="col" style="flex: 1;">
                     <label>Exam Duration</label>
                     <div class="difficulty-modes" id="doc-shuffle-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn" data-val="15">15 Min</button>
@@ -827,7 +884,7 @@
                         <span style="color: var(--text-secondary); font-size: 0.9rem;">minutes</span>
                     </div>
                 </div>
-                <div class="col" style="flex: 1;">
+                <div class="col" style="flex: 0.9;">
                     <label>Test Rules</label>
                     <div class="setting-chips-group">
                         <label class="setting-chip-pill" style="width: 100%;">

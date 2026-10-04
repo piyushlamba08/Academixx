@@ -89,6 +89,15 @@ document.addEventListener('DOMContentLoaded', () => {
         els.errorMsg.classList.remove('active');
     }
 
+    /* ── Mode-btn toggle for subject ── */
+    document.querySelectorAll('#doc-shuffle-subject-group .mode-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('#doc-shuffle-subject-group .mode-btn')
+                .forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
     /* ── Mode-btn toggle for duration ── */
     document.querySelectorAll('#doc-shuffle-duration-group .mode-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -160,12 +169,18 @@ document.addEventListener('DOMContentLoaded', () => {
             QuizEngine.state.negativeMarking = els.negativeCheck?.checked ?? false;
             QuizEngine.state.timerMode = 'countdown';
 
+            const activeSubBtn = document.querySelector('#doc-shuffle-subject-group .mode-btn.active');
+            const subject = activeSubBtn ? (activeSubBtn.dataset.subject || activeSubBtn.textContent.trim()) : 'Maths';
+            const topicInput = document.getElementById('doc-shuffle-topic-input');
+            const rawTopic = topicInput ? topicInput.value.trim() : '';
+            const finalTopic = rawTopic ? `${subject} — ${rawTopic}` : `${subject} Document Shuffle`;
+
             const sourceName = selectedFile.name;
             clearFile();
 
             QuizEngine.startQuiz(formattedQuestions, durationMinutes, {
                 trackProgress: true,
-                topic:         'Document Shuffle',
+                topic:         finalTopic,
                 sourceName,
             });
 

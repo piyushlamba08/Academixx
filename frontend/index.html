@@ -60,6 +60,9 @@
                 <button class="app-nav-link" data-tab="syllabus" onclick="SyllabusManager.open();">
                     <i class="ph-bold ph-book-open"></i> Syllabus
                 </button>
+                <button class="app-nav-link" data-tab="planner" onclick="DailyPlanner.open();">
+                    <i class="ph-bold ph-calendar-check"></i> Daily Planner
+                </button>
             </nav>
 
             <div class="header-right">
@@ -103,6 +106,10 @@
             <button class="mobile-nav-link" data-tab="syllabus" onclick="closeMobileDrawer(); SyllabusManager.open();">
                 <i class="ph-bold ph-book-open"></i>
                 <span>Syllabus</span>
+            </button>
+            <button class="mobile-nav-link" data-tab="planner" onclick="closeMobileDrawer(); DailyPlanner.open();">
+                <i class="ph-bold ph-calendar-check"></i>
+                <span>Daily Planner</span>
             </button>
         </nav>
     </aside>
@@ -253,6 +260,43 @@
                     </div>
                     <button class="card-action-btn secondary" onclick="ProgressDashboard.open()">
                         <i class="ph-bold ph-chart-line-up"></i> View Full Analytics
+                    </button>
+                </div>
+            </div>
+
+            <!-- Daily Study Goal & Planner Widget -->
+            <div class="home-planner-widget" onclick="DailyPlanner.open()">
+                <div class="hp-left">
+                    <div class="hp-icon-badge">
+                        <i class="ph-bold ph-calendar-check"></i>
+                    </div>
+                    <div class="hp-meta">
+                        <div class="hp-title-row">
+                            <h3>Today's Study Goal & Tasks</h3>
+                            <span class="hp-status-tag" id="home-planner-status-text">Plan today's tasks now</span>
+                        </div>
+                        <div class="hp-progress-wrap">
+                            <div class="hp-progress-bar-track">
+                                <div id="home-planner-bar-fill" class="hp-progress-bar-fill" style="width: 0%;"></div>
+                            </div>
+                            <div class="hp-progress-numbers">
+                                <span id="home-planner-ratio">0/0 Tasks</span>
+                                <span id="home-planner-pct" class="hp-pct-bold">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hp-right">
+                    <div class="hp-streak-box">
+                        <span class="hp-streak-val text-orange" id="home-planner-streak-count">0 Days</span>
+                        <span class="hp-streak-lbl"><i class="ph-bold ph-fire"></i> Goal Streak</span>
+                    </div>
+                    <div class="hp-streak-box">
+                        <span class="hp-streak-val text-green" id="home-planner-achieved-count">0 Days</span>
+                        <span class="hp-streak-lbl"><i class="ph-bold ph-trophy"></i> 90%+ Met</span>
+                    </div>
+                    <button class="hp-open-btn" onclick="event.stopPropagation(); DailyPlanner.open();">
+                        Open Planner <i class="ph-bold ph-arrow-right"></i>
                     </button>
                 </div>
             </div>
@@ -1350,6 +1394,227 @@
             </div>
         </div>
 
+        <!-- ============================================================
+             DAILY STUDY PLANNER & GOAL TRACKER SCREEN
+             ============================================================ -->
+        <div id="daily-planner-screen" class="screen progress-screen">
+            <div class="screen-page-header">
+                <div class="page-title-wrap">
+                    <span class="page-kicker"><i class="ph-fill ph-calendar-check"></i> Daily Study Management</span>
+                    <h1>Daily Study Planner & Goal Tracker</h1>
+                    <p class="subtitle">Set your daily targets, tick off tasks, and track your 90%+ goal achievements over weeks & months.</p>
+                </div>
+                <button class="app-back-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('home');">
+                    <i class="ph-bold ph-arrow-left"></i> Home
+                </button>
+            </div>
+
+            <!-- Date Switcher & Target Goal Settings Control Hub -->
+            <div class="planner-control-hub">
+                <div class="planner-hub-date-group">
+                    <button class="planner-nav-date-btn" title="Previous Day" onclick="DailyPlanner.changeDateOffset(-1)">
+                        <i class="ph-bold ph-caret-left"></i>
+                    </button>
+                    <div class="planner-current-date-box" onclick="DailyPlanner.selectDate(new Date().toISOString().slice(0,10))">
+                        <i class="ph-bold ph-calendar"></i>
+                        <span id="planner-current-date-text">Today</span>
+                        <span id="planner-today-badge" class="badge-tag">Today</span>
+                    </div>
+                    <button class="planner-nav-date-btn" title="Next Day" onclick="DailyPlanner.changeDateOffset(1)">
+                        <i class="ph-bold ph-caret-right"></i>
+                    </button>
+                    <button class="planner-jump-today-btn" onclick="DailyPlanner.selectDate(new Date().toISOString().slice(0,10))">
+                        Jump to Today
+                    </button>
+                </div>
+
+                <div class="planner-hub-target-group">
+                    <label for="planner-target-select"><i class="ph-bold ph-target"></i> Target Threshold:</label>
+                    <select id="planner-target-select" class="modern-select planner-target-select" onchange="DailyPlanner.setTargetThreshold(this.value)">
+                        <option value="75">75% Completion</option>
+                        <option value="80">80% Completion</option>
+                        <option value="85">85% Completion</option>
+                        <option value="90" selected>90% Completion (Recommended)</option>
+                        <option value="95">95% Completion</option>
+                        <option value="100">100% Full Completion</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Overview Metrics Row (Cards) -->
+            <div class="planner-metrics-grid">
+                <!-- Card 1: Day Progress Ring & Status -->
+                <div class="planner-metric-card highlight-card">
+                    <div class="pm-ring-wrap">
+                        <svg class="pm-ring-svg" viewBox="0 0 90 90">
+                            <circle class="pm-ring-track" cx="45" cy="45" r="38" />
+                            <circle class="pm-ring-fill" id="planner-day-ring-fill" cx="45" cy="45" r="38" />
+                        </svg>
+                        <div class="pm-ring-text">
+                            <span id="planner-day-pct-val">0%</span>
+                            <small>DONE</small>
+                        </div>
+                    </div>
+                    <div class="pm-meta-wrap">
+                        <span class="pm-lbl">Day Completion</span>
+                        <h3 id="planner-tasks-ratio-text">0 of 0 Tasks Done</h3>
+                        <div id="planner-goal-status-badge" class="planner-status-pill empty">
+                            <i class="ph-bold ph-pencil-simple"></i> Plan Your Day
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Lifetime Goals Achieved Counter (User requirement) -->
+                <div class="planner-metric-card">
+                    <div class="pm-icon-wrap trophy-icon">
+                        <i class="ph-fill ph-trophy"></i>
+                    </div>
+                    <div class="pm-meta-wrap">
+                        <span class="pm-lbl">Total Goals Achieved</span>
+                        <div class="pm-big-val text-green" id="planner-metric-achieved-count">0</div>
+                        <span class="pm-sub-text">Days with ≥90% work done</span>
+                    </div>
+                </div>
+
+                <!-- Card 3: Current Streak -->
+                <div class="planner-metric-card">
+                    <div class="pm-icon-wrap streak-icon">
+                        <i class="ph-fill ph-fire"></i>
+                    </div>
+                    <div class="pm-meta-wrap">
+                        <span class="pm-lbl">Goal Streak</span>
+                        <div class="pm-big-val text-orange" id="planner-metric-streak">0</div>
+                        <span class="pm-sub-text">Consecutive target hit days</span>
+                    </div>
+                </div>
+
+                <!-- Card 4: 7-Day & 30-Day Averages -->
+                <div class="planner-metric-card">
+                    <div class="pm-icon-wrap stats-icon">
+                        <i class="ph-bold ph-chart-line-up"></i>
+                    </div>
+                    <div class="pm-meta-wrap">
+                        <span class="pm-lbl">Average Completion</span>
+                        <div class="pm-split-row">
+                            <div class="pm-split-item">
+                                <span class="pm-split-val" id="planner-metric-avg7">0%</span>
+                                <small>7-Day Avg</small>
+                            </div>
+                            <div class="pm-split-divider"></div>
+                            <div class="pm-split-item">
+                                <span class="pm-split-val" id="planner-metric-avg30">0%</span>
+                                <small>30-Day Avg</small>
+                            </div>
+                        </div>
+                        <span class="pm-sub-text">Based on active study days</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7-Day Visual Performance & Trend Bar Timeline (User requirement) -->
+            <div class="planner-section-card">
+                <div class="planner-section-header">
+                    <div>
+                        <h3><i class="ph-bold ph-chart-bar"></i> 7-Day Performance History</h3>
+                        <p class="section-sub">Inspect past days to see your exact completion percentage & what you accomplished.</p>
+                    </div>
+                    <span class="target-indicator-pill"><i class="ph-bold ph-target"></i> Target: ≥90% Green</span>
+                </div>
+                <div class="planner-7day-container" id="planner-7day-bars">
+                    <!-- 7 columns injected dynamically via DailyPlanner.render() -->
+                </div>
+            </div>
+
+            <!-- Task Management Section (Add Task & Checklist) -->
+            <div class="planner-main-grid">
+                <div class="planner-tasks-card">
+                    <div class="planner-tasks-card-header">
+                        <div class="ptc-header-left">
+                            <h3><i class="ph-bold ph-check-square"></i> Tasks for Selected Day</h3>
+                            <div class="planner-filter-chips">
+                                <button class="planner-filter-chip active" data-filter="all" onclick="DailyPlanner.setFilter('all')">All</button>
+                                <button class="planner-filter-chip" data-filter="pending" onclick="DailyPlanner.setFilter('pending')">Pending</button>
+                                <button class="planner-filter-chip" data-filter="completed" onclick="DailyPlanner.setFilter('completed')">Completed</button>
+                            </div>
+                        </div>
+                        <div class="ptc-header-actions">
+                            <button class="planner-action-btn secondary" title="Copy uncompleted tasks from yesterday" onclick="DailyPlanner.copyYesterdayPending()">
+                                <i class="ph-bold ph-arrow-bend-double-up-right"></i> Copy Yesterday's Pending
+                            </button>
+                            <button class="planner-action-btn" title="Mark all tasks done" onclick="DailyPlanner.markAllCompleted()">
+                                <i class="ph-bold ph-checks"></i> Mark All Done
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add New Task Input Bar -->
+                    <form id="planner-add-task-form" class="planner-add-task-form">
+                        <div class="task-input-wrapper">
+                            <i class="ph-bold ph-plus-circle task-input-icon"></i>
+                            <input type="text" id="planner-new-task-input" placeholder="What will you study/practice today? (e.g. 50 Big Calculations, Batch Lecture 3, Mock Test)..." required autocomplete="off">
+                        </div>
+                        <div class="task-input-controls">
+                            <select id="planner-subject-select" class="modern-select task-select">
+                                <option value="Quant">Quant 📐</option>
+                                <option value="Reasoning">Reasoning 🧩</option>
+                                <option value="English">English 📖</option>
+                                <option value="GK/GS">GK / GS 🌍</option>
+                                <option value="Revision">Revision 🔄</option>
+                                <option value="Mock Test">Mock Test 📝</option>
+                                <option value="General">General 📌</option>
+                            </select>
+                            <select id="planner-priority-select" class="modern-select task-select">
+                                <option value="normal">Normal Priority</option>
+                                <option value="medium">Medium ⚡</option>
+                                <option value="high">High Priority 🔥</option>
+                            </select>
+                            <button type="submit" class="planner-add-btn">
+                                <i class="ph-bold ph-plus"></i> Add Task
+                            </button>
+                        </div>
+                    </form>
+
+                    <!-- Task List Items -->
+                    <div id="planner-task-list" class="planner-task-list">
+                        <!-- Dynamic task items injected via DailyPlanner.render() -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="planner-empty-tasks" class="planner-empty-state" style="display: none;">
+                        <div class="empty-icon-wrap"><i class="ph-bold ph-clipboard-text"></i></div>
+                        <h4>No Tasks Found</h4>
+                        <p>You haven't scheduled any tasks for this day yet. Add your study goals using the box above!</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Past 30 Days History Log Table -->
+            <div class="planner-section-card history-table-card">
+                <div class="planner-section-header">
+                    <div>
+                        <h3><i class="ph-bold ph-clock-counter-clockwise"></i> Past Days Performance Log</h3>
+                        <p class="section-sub">Detailed breakdown of all your recorded study days and goal achievement statuses.</p>
+                    </div>
+                </div>
+                <div class="planner-table-responsive">
+                    <table class="planner-history-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Tasks Completed</th>
+                                <th>Completion %</th>
+                                <th>Status</th>
+                                <th style="text-align:right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="planner-history-table-body">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
         <!-- Confirmation Modal -->
         <div id="exit-modal" class="modal-overlay">
             <div class="modal-content">
@@ -1373,6 +1638,7 @@
     <script src="calc-analytics.js?v=7"></script>
     <script src="syllabus-data.js?v=7"></script>
     <script src="syllabus-manager.js?v=7"></script>
+    <script src="daily-planner.js?v=7"></script>
     <script>
         // Theme Toggle Logic
         const themeBtn = document.getElementById('theme-toggle');
@@ -1514,6 +1780,10 @@
                 } else {
                     prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> On Track';
                 }
+            }
+
+            if (typeof DailyPlanner !== 'undefined' && DailyPlanner.updateHomeWidget) {
+                DailyPlanner.updateHomeWidget();
             }
         }
 

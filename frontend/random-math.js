@@ -14,7 +14,8 @@ window.selectOperation = function(op) {
         'tables': 'Multiplication Tables',
         'random': 'Mixed Questions',
         'percentToFraction': '% → Fraction Drill',
-        'fractionToPercent': 'Fraction → % Drill'
+        'fractionToPercent': 'Fraction → % Drill',
+        'bigCalculation': 'Big Calculations Drill'
     };
     document.getElementById('setup-title').textContent = titles[op];
 
@@ -50,6 +51,15 @@ window.selectOperation = function(op) {
     if (['percentToFraction', 'fractionToPercent'].includes(op)) {
         document.getElementById('setting-complexity').style.display = 'none';
         document.getElementById('setting-terms').style.display = 'none';
+        document.getElementById('setting-decimals').style.display = 'none';
+        document.getElementById('setting-tables').style.display = 'none';
+        mcqBtn.click();
+        manualBtn.disabled = true;
+    }
+
+    if (op === 'bigCalculation') {
+        document.getElementById('setting-complexity').style.display = 'none';
+        document.getElementById('setting-terms').style.display = 'block';
         document.getElementById('setting-decimals').style.display = 'none';
         document.getElementById('setting-tables').style.display = 'none';
         mcqBtn.click();
@@ -328,6 +338,159 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // ── Big Calculations Generator (Notebook Copy Style) ─────────────────
+    function renderCopyFraction(num, den) {
+        return `<span class="copy-fraction"><span class="copy-num">${num}</span><span class="copy-den">${den}</span></span>`;
+    }
+
+    function generateBigCalculation(terms = 3) {
+        const type = Math.floor(Math.random() * 5);
+        let questionHtml = '';
+        let ansVal = 0;
+
+        if (type === 0) {
+            // Pattern 0: Fraction product chain
+            const numPool = [9, 18, 27, 36, 45, 54, 72, 81, 14, 21, 28, 35, 42, 22, 33, 44, 15, 25, 48, 64, 16, 24];
+            const denPool = [2, 4, 5, 8, 10, 16, 20, 25, 40, 50];
+            const count = Math.min(4, Math.max(2, parseInt(terms) || 3));
+
+            const fractions = [];
+            let nProd = 1;
+            let dProd = 1;
+            for (let i = 0; i < count; i++) {
+                const n = numPool[Math.floor(Math.random() * numPool.length)];
+                const d = denPool[Math.floor(Math.random() * denPool.length)];
+                fractions.push({ n, d });
+                nProd *= n;
+                dProd *= d;
+            }
+            ansVal = parseFloat((nProd / dProd).toFixed(4));
+
+            const parts = fractions.map(f => renderCopyFraction(f.n, f.d)).join(' <span class="copy-op">×</span> ');
+            questionHtml = `<div class="copy-math-container">${parts} <span class="copy-op">=</span> <span class="copy-qmark">?</span></div>`;
+
+        } else if (type === 1) {
+            // Pattern 1: Whole number × Fraction Chain (e.g. 2500 × 18/25 × 14/15)
+            const wholePool = [1200, 1400, 1500, 1600, 1800, 2400, 2500, 3200, 3600, 4500, 4800, 5400, 6400, 7200, 9600, 12500, 15625];
+            const W = wholePool[Math.floor(Math.random() * wholePool.length)];
+            const pairs = [
+                [{ n: 18, d: 25 }, { n: 14, d: 15 }],
+                [{ n: 27, d: 20 }, { n: 15, d: 18 }],
+                [{ n: 28, d: 25 }, { n: 28, d: 25 }],
+                [{ n: 22, d: 7 }, { n: 14, d: 25 }],
+                [{ n: 35, d: 16 }, { n: 9, d: 14 }],
+                [{ n: 45, d: 32 }, { n: 16, d: 15 }],
+                [{ n: 24, d: 25 }, { n: 35, d: 18 }],
+                [{ n: 21, d: 16 }, { n: 32, d: 27 }]
+            ];
+            const p = pairs[Math.floor(Math.random() * pairs.length)];
+            const raw = (W * p[0].n * p[1].n) / (p[0].d * p[1].d);
+            ansVal = parseFloat(raw.toFixed(3));
+
+            questionHtml = `<div class="copy-math-container"><span class="copy-whole-num">${W}</span> <span class="copy-op">×</span> ${renderCopyFraction(p[0].n, p[0].d)} <span class="copy-op">×</span> ${renderCopyFraction(p[1].n, p[1].d)} <span class="copy-op">=</span> <span class="copy-qmark">?</span></div>`;
+
+        } else if (type === 2) {
+            // Pattern 2: Two Fraction Products with + or -
+            const isAdd = Math.random() > 0.35;
+            const opSym = isAdd ? '+' : '−';
+            const sets = [
+                { f1: { n: 36, d: 5 }, f2: { n: 15, d: 4 }, f3: { n: 28, d: 9 }, f4: { n: 27, d: 14 } },
+                { f1: { n: 45, d: 8 }, f2: { n: 16, d: 15 }, f3: { n: 21, d: 10 }, f4: { n: 25, d: 14 } },
+                { f1: { n: 72, d: 25 }, f2: { n: 50, d: 9 }, f3: { n: 54, d: 7 }, f4: { n: 28, d: 27 } },
+                { f1: { n: 64, d: 15 }, f2: { n: 45, d: 16 }, f3: { n: 35, d: 12 }, f4: { n: 36, d: 25 } },
+                { f1: { n: 81, d: 20 }, f2: { n: 25, d: 18 }, f3: { n: 42, d: 11 }, f4: { n: 33, d: 14 } }
+            ];
+            const s = sets[Math.floor(Math.random() * sets.length)];
+            const p1 = (s.f1.n * s.f2.n) / (s.f1.d * s.f2.d);
+            const p2 = (s.f3.n * s.f4.n) / (s.f3.d * s.f4.d);
+            const raw = isAdd ? (p1 + p2) : (p1 - p2);
+            ansVal = parseFloat(raw.toFixed(3));
+
+            questionHtml = `<div class="copy-math-container">(${renderCopyFraction(s.f1.n, s.f1.d)} <span class="copy-op">×</span> ${renderCopyFraction(s.f2.n, s.f2.d)}) <span class="copy-op">${opSym}</span> (${renderCopyFraction(s.f3.n, s.f3.d)} <span class="copy-op">×</span> ${renderCopyFraction(s.f4.n, s.f4.d)}) <span class="copy-op">=</span> <span class="copy-qmark">?</span></div>`;
+
+        } else if (type === 3) {
+            // Pattern 3: Big Fraction (Numerator Block / Denominator Block)
+            const sets = [
+                { top: [72, 36, 19], bot: [25, 16] },
+                { top: [54, 75, 28], bot: [45, 14] },
+                { top: [144, 45, 17], bot: [36, 25] },
+                { top: [84, 63, 26], bot: [42, 18] },
+                { top: [96, 55, 39], bot: [48, 22] },
+                { top: [108, 49, 15], bot: [42, 27] },
+                { top: [81, 64, 25], bot: [36, 40] }
+            ];
+            const s = sets[Math.floor(Math.random() * sets.length)];
+            const topVal = s.top.reduce((a, b) => a * b, 1);
+            const botVal = s.bot.reduce((a, b) => a * b, 1);
+            ansVal = parseFloat((topVal / botVal).toFixed(3));
+
+            questionHtml = `<div class="copy-math-container"><span class="copy-big-fraction"><span class="copy-big-num">${s.top.join(' × ')}</span><span class="copy-big-den">${s.bot.join(' × ')}</span></span> <span class="copy-op">=</span> <span class="copy-qmark">?</span></div>`;
+
+        } else {
+            // Pattern 4: Percentage + Fraction mix
+            const sets = [
+                { pct: 36, base: 450, f: { n: 15, d: 8 } },
+                { pct: 45, base: 640, f: { n: 27, d: 32 } },
+                { pct: 28, base: 750, f: { n: 18, d: 25 } },
+                { pct: 64, base: 375, f: { n: 21, d: 16 } },
+                { pct: 48, base: 625, f: { n: 14, d: 15 } },
+                { pct: 72, base: 250, f: { n: 35, d: 18 } }
+            ];
+            const s = sets[Math.floor(Math.random() * sets.length)];
+            const part = (s.pct / 100) * s.base;
+            const raw = part * (s.f.n / s.f.d);
+            ansVal = parseFloat(raw.toFixed(3));
+
+            questionHtml = `<div class="copy-math-container"><span class="copy-whole-num">${s.pct}% of ${s.base}</span> <span class="copy-op">×</span> ${renderCopyFraction(s.f.n, s.f.d)} <span class="copy-op">=</span> <span class="copy-qmark">?</span></div>`;
+        }
+
+        // Smart Options Generation (Realistic spread for speed tricks & elimination)
+        const isInt = Number.isInteger(ansVal);
+        const precision = isInt ? 0 : Math.min(3, (ansVal.toString().split('.')[1] || '').length);
+        const correctStr = isInt ? ansVal.toString() : ansVal.toFixed(precision);
+
+        const optionsSet = new Set([correctStr]);
+        let baseDelta;
+        if (isInt) {
+            baseDelta = ansVal > 1000 ? (Math.random() < 0.5 ? 40 : 60) : 
+                       (ansVal > 200 ? (Math.random() < 0.5 ? 16 : 24) : 
+                       (ansVal > 50 ? (Math.random() < 0.5 ? 8 : 12) : 4));
+        } else {
+            baseDelta = ansVal > 500 ? 12.5 : 
+                       (ansVal > 50 ? 3.6 : 
+                       (ansVal > 10 ? 1.8 : 0.36));
+        }
+
+        const multipliers = [1, -1, 2, -2, 3, -3, 1.5, -1.5, 4, -4];
+        for (const m of multipliers) {
+            if (optionsSet.size >= 4) break;
+            const cand = isInt ? Math.round(ansVal + m * baseDelta) : +(ansVal + m * baseDelta).toFixed(precision);
+            if (cand > 0 && cand !== ansVal) {
+                optionsSet.add(isInt ? cand.toString() : cand.toFixed(precision));
+            }
+        }
+
+        let f = 1;
+        while (optionsSet.size < 4) {
+            const fallbackStep = isInt ? 5 : 0.25;
+            const alt = isInt ? (ansVal + f * fallbackStep) : +(ansVal + f * fallbackStep).toFixed(precision);
+            if (alt > 0 && alt !== ansVal) optionsSet.add(isInt ? alt.toString() : alt.toFixed(precision));
+            f++;
+        }
+
+        const optionsArr = Array.from(optionsSet);
+        for (let i = optionsArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [optionsArr[i], optionsArr[j]] = [optionsArr[j], optionsArr[i]];
+        }
+
+        return {
+            question: questionHtml,
+            correctAnswer: correctStr,
+            options: optionsArr
+        };
+    }
+
     document.getElementById('start-math-btn').addEventListener('click', async () => {
         const digitsBtn = document.querySelector('#setting-complexity .mode-btn.active');
         const digits = digitsBtn ? parseInt(digitsBtn.dataset.mode || digitsBtn.dataset.digits) : 2;
@@ -355,7 +518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         let questions = [];
         const ops = ['addition', 'subtraction', 'multiplication', 'division', 'square', 'cube', 'squareRoot'];
 
-        if (currentOperation !== 'random') {
+        if (!['random', 'percentToFraction', 'fractionToPercent', 'bigCalculation'].includes(currentOperation)) {
             // Single topic selected — try the dedicated backend endpoint first.
             const serverQuestions = await fetchServerQuestions(currentOperation, { digits, terms, count, allowDecimals, tableFrom, tableTo, multFrom, multTo });
             const finalInputMode = (currentOperation === 'squareRoot') ? 'mcq' : defaultInputMode;
@@ -399,10 +562,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     case 'tables': qObj = generateTable(); break;
                     case 'percentToFraction': qObj = generatePercentToFraction(); break;
                     case 'fractionToPercent': qObj = generateFractionToPercent(); break;
+                    case 'bigCalculation': qObj = generateBigCalculation(currentTerms); break;
                 }
 
-                // For % drills the generator already returns MCQ options
-                let finalInputMode = (op === 'squareRoot' || forceMCQ || ['percentToFraction','fractionToPercent'].includes(op)) ? 'mcq' : defaultInputMode;
+                // For % and bigCalculation drills the generator already returns MCQ options
+                let finalInputMode = (op === 'squareRoot' || op === 'bigCalculation' || forceMCQ || ['percentToFraction','fractionToPercent'].includes(op)) ? 'mcq' : defaultInputMode;
 
                 // Use generator-provided options for % drills; generate for others
                 const opts = qObj.options
@@ -422,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
         startBtn.disabled = false;
         startBtn.textContent = originalBtnText;
 
-        const topicLabel = (currentOperation === 'random') ? 'Mixed Calculation' : (currentOperation.charAt(0).toUpperCase() + currentOperation.slice(1));
+        const topicLabel = (currentOperation === 'random') ? 'Mixed Calculation' : (currentOperation === 'bigCalculation' ? 'Big Calculations' : (currentOperation.charAt(0).toUpperCase() + currentOperation.slice(1)));
 
         // Configure Quiz Engine
         QuizEngine.state.negativeMarking = negativeMarking;

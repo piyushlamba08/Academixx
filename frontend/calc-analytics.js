@@ -16,12 +16,14 @@ const CalcAnalytics = (() => {
         { key: 'tables',            label: 'Tables',           icon: 'ph-grid-nine',      color: '#6366f1', target: 6  },
         { key: 'percentToFraction', label: '% → Fraction',    icon: 'ph-percent',        color: '#ec4899', target: 8  },
         { key: 'fractionToPercent', label: 'Fraction → %',    icon: 'ph-arrows-left-right', color: '#f59e0b', target: 8 },
+        { key: 'bigCalculation',    label: 'Big Calculations', icon: 'ph-function',       color: '#a855f7', target: 20 },
         { key: 'random',            label: 'Mixed',            icon: 'ph-shuffle',        color: '#64748b', target: 15 },
     ];
 
     /* ── Keyword → topic key detector ─────────────────────────────────────── */
     function detectTopicFromQuestion(q = '') {
         const t = q.toLowerCase();
+        if (t.includes('copy-fraction') || t.includes('copy-math-container') || t.includes('big-fraction') || t.includes('big calculation')) return 'bigCalculation';
         if (t.includes('convert') && t.includes('%') && t.includes('fraction')) return 'percentToFraction';
         if (t.includes('convert') && t.includes('/') && t.includes('percentage')) return 'fractionToPercent';
         if (t.includes('²') || t.includes('^2') || (t.includes('square of') && !t.includes('root'))) return 'square';

@@ -119,8 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', selectedFile);
 
         try {
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiUrl = isLocal ? 'http://localhost:8000/api/process-pdf' : 'https://mock-test-backend-crqm.onrender.com/api/process-pdf';
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.') || window.location.hostname.endsWith('.local');
+            const localHost = window.location.hostname || 'localhost';
+            const apiUrl = isLocal ? `http://${localHost}:8000/api/process-pdf` : 'https://mock-test-backend-crqm.onrender.com/api/process-pdf';
             const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData

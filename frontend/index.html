@@ -1810,8 +1810,9 @@
                     if (typeof refreshHomeStats === 'function') {
                         await refreshHomeStats();
                     }
-                    if (typeof ProgressDashboard !== 'undefined' && ProgressDashboard.renderOverview) {
-                        await ProgressDashboard.renderOverview();
+                    if (typeof ProgressDashboard !== 'undefined') {
+                        if (ProgressDashboard.renderDashboard) await ProgressDashboard.renderDashboard();
+                        if (ProgressDashboard.renderNotebook) await ProgressDashboard.renderNotebook();
                     }
                     if (typeof CalcAnalytics !== 'undefined' && CalcAnalytics.renderAll) {
                         await CalcAnalytics.renderAll();
@@ -1920,7 +1921,7 @@
             if (accEl) accEl.textContent = accuracyText;
 
             const streak = await ProgressStore.getBestStreak();
-            if (streakEl) streakEl.textContent = streak;
+            if (streakEl) streakEl.textContent = (!tests.length) ? 0 : streak;
 
             const rawMistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: true });
             const mistakes = (typeof ProgressDashboard !== 'undefined' && ProgressDashboard.isMistakeEligible)
@@ -1930,7 +1931,7 @@
                     const q = (m.question || '').toLowerCase();
                     return !t.includes('calculation') && !t.includes('speed') && !q.includes('copy-');
                 });
-            if (mistakesEl) mistakesEl.textContent = mistakes.length;
+            if (mistakesEl) mistakesEl.textContent = (!tests.length) ? 0 : mistakes.length;
 
             const prepMasteryEl = document.getElementById('prep-mastery-status');
             const prepMistakesEl = document.getElementById('prep-mistakes-active');
@@ -1944,10 +1945,12 @@
                 else prepMasteryEl.textContent = 'Needs Practice';
             }
             if (prepMistakesEl) {
-                prepMistakesEl.textContent = `${mistakes.length} Active`;
+                prepMistakesEl.textContent = `${(!tests.length) ? 0 : mistakes.length} Active`;
             }
             if (prepPaceEl) {
-                if (accuracyPct >= 80) {
+                if (!tests.length) {
+                    prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> On Track';
+                } else if (accuracyPct >= 80) {
                     prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> High Pace';
                 } else {
                     prepPaceEl.innerHTML = '<i class="ph-bold ph-trend-up"></i> On Track';

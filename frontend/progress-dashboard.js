@@ -644,8 +644,9 @@ const ProgressDashboard = (() => {
         `;
 
         try {
-            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const apiUrl = isLocal ? 'http://localhost:8000/api/ai/shortcut-trick' : 'https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick';
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.') || window.location.hostname.startsWith('10.') || window.location.hostname.startsWith('172.') || window.location.hostname.endsWith('.local');
+            const localHost = window.location.hostname || 'localhost';
+            const apiUrl = isLocal ? `http://${localHost}:8000/api/ai/shortcut-trick` : 'https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick';
             const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

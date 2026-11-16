@@ -1,6 +1,16 @@
 const ProgressStore = (() => {
-    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-    const API_BASE = isLocal ? 'http://localhost:8000/api/progress' : (window.BACKEND_URL ? `${window.BACKEND_URL}/api/progress` : 'https://mock-test-backend-crqm.onrender.com/api/progress');
+    const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.startsWith('192.168.') ||
+        window.location.hostname.startsWith('10.') ||
+        window.location.hostname.startsWith('172.') ||
+        window.location.hostname.endsWith('.local')
+    );
+    const localHost = (typeof window !== 'undefined' && window.location.hostname) ? window.location.hostname : 'localhost';
+    const API_BASE = isLocal ? `http://${localHost}:8000/api/progress` : (window.BACKEND_URL ? `${window.BACKEND_URL}/api/progress` : 'https://mock-test-backend-crqm.onrender.com/api/progress');
+
+    const WIPED_TIMESTAMP_KEY = 'academix_wiped_timestamp';
 
     // In-memory cache for instant zero-lag page navigation
     const cache = {
@@ -145,6 +155,7 @@ const ProgressStore = (() => {
 
     async function getTests(forceRefresh = false) {
         if (!forceRefresh && cache.tests) return cache.tests;
+        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
         let remoteTests = null;
         let remoteSuccess = false;
         try {
@@ -162,13 +173,15 @@ const ProgressStore = (() => {
             // Push any pending offline tests and wipe localStorage clean
             await syncOfflineTestsToRemote();
 
-            const canonical = remoteTests.map(t => ({
-                ...t,
-                correctCount: Number(t.correctCount) || 0,
-                wrongCount: Number(t.wrongCount) || 0,
-                skippedCount: Number(t.skippedCount) || 0,
-                total: computeTestTotal(t)
-            }));
+            const canonical = remoteTests
+                .filter(t => !wipedAt || (new Date(t.completedAt || 0).getTime() > wipedAt))
+                .map(t => ({
+                    ...t,
+                    correctCount: Number(t.correctCount) || 0,
+                    wrongCount: Number(t.wrongCount) || 0,
+                    skippedCount: Number(t.skippedCount) || 0,
+                    total: computeTestTotal(t)
+                }));
             canonical.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
             cache.tests = canonical;
             return canonical;
@@ -176,13 +189,15 @@ const ProgressStore = (() => {
 
         // OFFLINE FALLBACK: Only used when server is completely unreachable
         const localTests = getLocalTests();
-        const fallback = localTests.map(t => ({
-            ...t,
-            correctCount: Number(t.correctCount) || 0,
-            wrongCount: Number(t.wrongCount) || 0,
-            skippedCount: Number(t.skippedCount) || 0,
-            total: computeTestTotal(t)
-        }));
+        const fallback = localTests
+            .filter(t => !wipedAt || (new Date(t.completedAt || 0).getTime() > wipedAt))
+            .map(t => ({
+                ...t,
+                correctCount: Number(t.correctCount) || 0,
+                wrongCount: Number(t.wrongCount) || 0,
+                skippedCount: Number(t.skippedCount) || 0,
+                total: computeTestTotal(t)
+            }));
         fallback.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
         cache.tests = fallback;
         return fallback;
@@ -218,21 +233,28 @@ const ProgressStore = (() => {
     async function getMistakes({ topic = 'all', activeOnly = true } = {}, forceRefresh = false) {
         const cacheKey = `${topic}_${activeOnly}`;
         const tags = getMistakeTags();
+        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
         if (!forceRefresh && cache.mistakes[cacheKey]) {
-            return cache.mistakes[cacheKey].map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            return cache.mistakes[cacheKey]
+                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
+                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
         }
         try {
             const params = new URLSearchParams({ topic, activeOnly });
             const res = await fetch(`${API_BASE}/mistakes?${params.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch mistakes');
             const data = await res.json();
-            const enriched = data.map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            const enriched = data
+                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
+                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
             cache.mistakes[cacheKey] = enriched;
             return enriched;
         } catch (e) {
             console.error(e);
             const fallback = cache.mistakes[cacheKey] || [];
-            return fallback.map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            return fallback
+                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
+                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
         }
     }
 
@@ -251,6 +273,11 @@ const ProgressStore = (() => {
     }
 
     async function getBestStreak(forceRefresh = false) {
+        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
+        if (wipedAt) {
+            const currentTests = await getTests();
+            if (!currentTests || currentTests.length === 0) return 0;
+        }
         if (!forceRefresh && cache.bestStreak !== null) return cache.bestStreak;
         try {
             const res = await fetch(`${API_BASE}/streak`);
@@ -310,6 +337,11 @@ const ProgressStore = (() => {
     }
 
     async function wipeAllData() {
+        const now = Date.now();
+        try {
+            localStorage.setItem(WIPED_TIMESTAMP_KEY, now.toString());
+        } catch {}
+
         let remoteSuccess = false;
         try {
             const res = await fetch(`${API_BASE}/clean-data`, { method: 'DELETE' });

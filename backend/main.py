@@ -433,10 +433,12 @@ def update_streak(streak_in: StreakIn, db: Session = Depends(get_db)):
 
 
 @app.delete("/api/progress/clean-data")
+@app.post("/api/progress/clean-data")
 def clean_database_data(db: Session = Depends(get_db)):
     """
     Safely delete all stored progress data rows (tests, questions, mistakes, streaks).
     Tables and schema are NEVER dropped or modified.
+    Syllabus data is strictly preserved.
     """
     try:
         db.query(db_models.TestQuestion).delete()

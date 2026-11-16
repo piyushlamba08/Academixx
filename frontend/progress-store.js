@@ -10,9 +10,13 @@ const ProgressStore = (() => {
     const localHost = (typeof window !== 'undefined' && window.location.hostname) ? window.location.hostname : 'localhost';
     const API_BASE = isLocal ? `http://${localHost}:8000/api/progress` : (window.BACKEND_URL ? `${window.BACKEND_URL}/api/progress` : 'https://mock-test-backend-crqm.onrender.com/api/progress');
 
-    const WIPED_TIMESTAMP_KEY = 'academix_wiped_timestamp';
+    // Purge legacy localStorage keys that previously caused cross-browser desync
+    try {
+        localStorage.removeItem('academix_wiped_timestamp');
+        localStorage.removeItem('academix_tests_backup');
+    } catch {}
 
-    // In-memory cache for instant zero-lag page navigation
+    // In-memory cache for snappy navigation (invalidated automatically on saves and wipes)
     const cache = {
         tests: null,
         mistakes: {},
@@ -27,8 +31,6 @@ const ProgressStore = (() => {
         cache.bestStreak = null;
     }
 
-    const LOCAL_KEY = 'academix_tests_backup';
-
     function computeTestTotal(t) {
         if (!t) return 0;
         const total = Number(t.total);
@@ -38,94 +40,7 @@ const ProgressStore = (() => {
         return sum > 0 ? sum : 0;
     }
 
-    function getLocalTests() {
-        try {
-            const list = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]');
-            let changed = false;
-            const sanitized = list.map(t => {
-                if (!t) return t;
-                const total = computeTestTotal(t);
-                if (t.total !== total) {
-                    changed = true;
-                    return { ...t, total };
-                }
-                return t;
-            });
-            if (changed) {
-                try {
-                    localStorage.setItem(LOCAL_KEY, JSON.stringify(sanitized));
-                } catch {}
-            }
-            return sanitized;
-        } catch {
-            return [];
-        }
-    }
-
-    function clearLocalTests() {
-        try {
-            localStorage.removeItem(LOCAL_KEY);
-        } catch {}
-    }
-
-    function removeLocalTest(id) {
-        try {
-            const list = getLocalTests().filter(x => x && x.id !== id);
-            if (list.length === 0) {
-                clearLocalTests();
-            } else {
-                localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
-            }
-        } catch {}
-    }
-
-    function saveLocalTest(test) {
-        try {
-            const list = getLocalTests();
-            const total = computeTestTotal(test);
-            const enriched = {
-                id: test.id || `local_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
-                completedAt: test.completedAt || new Date().toISOString(),
-                ...test,
-                total
-            };
-            const existingIdx = list.findIndex(x => x.id === enriched.id);
-            if (existingIdx >= 0) {
-                list[existingIdx] = enriched;
-            } else {
-                list.unshift(enriched);
-            }
-            localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
-            return enriched;
-        } catch (e) {
-            console.warn('[ProgressStore] Could not save to localStorage', e);
-            return test;
-        }
-    }
-
-    async function syncOfflineTestsToRemote() {
-        const localTests = getLocalTests();
-        if (!localTests || localTests.length === 0) return;
-
-        // Push any test marked as pending offline
-        const pending = localTests.filter(t => t && t._isOfflinePending);
-        for (const test of pending) {
-            try {
-                const cleanTest = { ...test };
-                delete cleanTest._isOfflinePending;
-                await fetch(`${API_BASE}/tests`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(cleanTest)
-                });
-            } catch (e) {
-                console.warn('[ProgressStore] Failed to sync pending offline test', e);
-            }
-        }
-        // Once online and synced, purge local storage so DB remains single source of truth
-        clearLocalTests();
-    }
-
+    // Save test directly to Database — NO localStorage fallback / divergence
     async function saveTest(testData) {
         invalidateCache();
         const total = computeTestTotal(testData);
@@ -133,74 +48,45 @@ const ProgressStore = (() => {
         const completedAt = testData.completedAt || new Date().toISOString();
         const enrichedData = { ...testData, id: testId, completedAt, total };
 
-        // 1. Attempt direct save to backend database
         try {
             const res = await fetch(`${API_BASE}/tests`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(enrichedData)
             });
-            if (!res.ok) throw new Error('Failed to save test to remote');
+            if (!res.ok) throw new Error(`HTTP ${res.status}: Failed to save test to remote DB`);
             const data = await res.json();
-            const canonical = { ...data, total: computeTestTotal(data) || total };
-            // Ensure no lingering copy in localStorage
-            removeLocalTest(testId);
-            return canonical;
+            return { ...data, total: computeTestTotal(data) || total };
         } catch (e) {
-            console.warn('[ProgressStore] Remote save failed, queueing offline in localStorage', e);
-            enrichedData._isOfflinePending = true;
-            return saveLocalTest(enrichedData);
+            console.error('[ProgressStore] Database save error', e);
+            return enrichedData;
         }
     }
 
+    // Get tests directly from Database — SOLE SOURCE OF TRUTH ACROSS ALL BROWSERS
     async function getTests(forceRefresh = false) {
         if (!forceRefresh && cache.tests) return cache.tests;
-        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
-        let remoteTests = null;
-        let remoteSuccess = false;
         try {
             const res = await fetch(`${API_BASE}/tests`);
             if (res.ok) {
-                remoteTests = await res.json();
-                remoteSuccess = true;
-            }
-        } catch (e) {
-            console.warn('[ProgressStore] Remote fetch failed, using offline fallback', e);
-        }
-
-        // DATABASE IS PRIMARY & SOLE SOURCE OF TRUTH WHEN ONLINE
-        if (remoteSuccess && Array.isArray(remoteTests)) {
-            // Push any pending offline tests and wipe localStorage clean
-            await syncOfflineTestsToRemote();
-
-            const canonical = remoteTests
-                .filter(t => !wipedAt || (new Date(t.completedAt || 0).getTime() > wipedAt))
-                .map(t => ({
+                const remoteTests = await res.json();
+                const canonical = (Array.isArray(remoteTests) ? remoteTests : []).map(t => ({
                     ...t,
                     correctCount: Number(t.correctCount) || 0,
                     wrongCount: Number(t.wrongCount) || 0,
                     skippedCount: Number(t.skippedCount) || 0,
                     total: computeTestTotal(t)
                 }));
-            canonical.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
-            cache.tests = canonical;
-            return canonical;
+                canonical.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+                cache.tests = canonical;
+                return canonical;
+            } else {
+                console.warn('[ProgressStore] Remote fetch returned status:', res.status);
+            }
+        } catch (e) {
+            console.warn('[ProgressStore] Remote fetch failed:', e);
         }
-
-        // OFFLINE FALLBACK: Only used when server is completely unreachable
-        const localTests = getLocalTests();
-        const fallback = localTests
-            .filter(t => !wipedAt || (new Date(t.completedAt || 0).getTime() > wipedAt))
-            .map(t => ({
-                ...t,
-                correctCount: Number(t.correctCount) || 0,
-                wrongCount: Number(t.wrongCount) || 0,
-                skippedCount: Number(t.skippedCount) || 0,
-                total: computeTestTotal(t)
-            }));
-        fallback.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
-        cache.tests = fallback;
-        return fallback;
+        return cache.tests || [];
     }
 
     const MISTAKE_TAGS_KEY = 'academix_mistake_tags';
@@ -233,28 +119,21 @@ const ProgressStore = (() => {
     async function getMistakes({ topic = 'all', activeOnly = true } = {}, forceRefresh = false) {
         const cacheKey = `${topic}_${activeOnly}`;
         const tags = getMistakeTags();
-        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
         if (!forceRefresh && cache.mistakes[cacheKey]) {
-            return cache.mistakes[cacheKey]
-                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
-                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            return cache.mistakes[cacheKey].map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
         }
         try {
             const params = new URLSearchParams({ topic, activeOnly });
             const res = await fetch(`${API_BASE}/mistakes?${params.toString()}`);
             if (!res.ok) throw new Error('Failed to fetch mistakes');
             const data = await res.json();
-            const enriched = data
-                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
-                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            const enriched = (Array.isArray(data) ? data : []).map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
             cache.mistakes[cacheKey] = enriched;
             return enriched;
         } catch (e) {
             console.error(e);
             const fallback = cache.mistakes[cacheKey] || [];
-            return fallback
-                .filter(m => !wipedAt || (new Date(m.lastAttemptedAt || 0).getTime() > wipedAt))
-                .map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
+            return fallback.map(m => ({ ...m, mistakeTag: tags[m.key] || null }));
         }
     }
 
@@ -273,11 +152,6 @@ const ProgressStore = (() => {
     }
 
     async function getBestStreak(forceRefresh = false) {
-        const wipedAt = Number(localStorage.getItem(WIPED_TIMESTAMP_KEY)) || 0;
-        if (wipedAt) {
-            const currentTests = await getTests();
-            if (!currentTests || currentTests.length === 0) return 0;
-        }
         if (!forceRefresh && cache.bestStreak !== null) return cache.bestStreak;
         try {
             const res = await fetch(`${API_BASE}/streak`);
@@ -337,14 +211,24 @@ const ProgressStore = (() => {
     }
 
     async function wipeAllData() {
-        const now = Date.now();
+        // Clear any legacy keys from localStorage to prevent lingering stale data
         try {
-            localStorage.setItem(WIPED_TIMESTAMP_KEY, now.toString());
-        } catch {}
+            localStorage.removeItem('academix_wiped_timestamp');
+            localStorage.removeItem('academix_tests_backup');
+            localStorage.removeItem('academix_streak');
+            localStorage.removeItem('academix_mistake_tags');
+        } catch (e) {
+            console.warn('[ProgressStore] Failed to clear legacy local items', e);
+        }
+
+        invalidateCache();
 
         let remoteSuccess = false;
         try {
-            const res = await fetch(`${API_BASE}/clean-data`, { method: 'DELETE' });
+            let res = await fetch(`${API_BASE}/clean-data`, { method: 'DELETE' });
+            if (!res.ok) {
+                res = await fetch(`${API_BASE}/clean-data`, { method: 'POST' });
+            }
             if (res.ok) {
                 remoteSuccess = true;
             }
@@ -352,17 +236,7 @@ const ProgressStore = (() => {
             console.warn('[ProgressStore] Remote wipe request failed', e);
         }
 
-        // Wipe local caches & backup storage so no lingering zombie items remain
-        clearLocalTests();
-        try {
-            localStorage.removeItem(LOCAL_KEY);
-            localStorage.removeItem('academix_streak');
-            localStorage.removeItem('academix_mistake_tags');
-        } catch (e) {
-            console.warn('[ProgressStore] Failed to clear local storage items', e);
-        }
         invalidateCache();
-
         return remoteSuccess;
     }
 

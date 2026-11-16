@@ -92,7 +92,52 @@ const QuizEngine = {
             this.els.restartBtn.addEventListener('click', () => this.handleRestart());
         }
 
-        // ── Palette Grid Modal / Sheet Handlers ──
+        // ── Quiz Screen Theme Toggle ──
+        const quizThemeToggle = document.getElementById('quiz-theme-toggle');
+        if (quizThemeToggle) {
+            quizThemeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                const isDark = document.body.classList.contains('dark-theme');
+                localStorage.setItem('theme', isDark ? 'dark' : 'light');
+                const themeBtn = document.getElementById('theme-toggle');
+                if (themeBtn) themeBtn.innerHTML = isDark ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+                quizThemeToggle.innerHTML = isDark ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+            });
+        }
+
+        // ── Question Palette Sidebar Collapse Toggle (Desktop) ──
+        const toggleSidebarBtn = document.getElementById('toggle-palette-sidebar-btn');
+        if (toggleSidebarBtn) {
+            toggleSidebarBtn.addEventListener('click', () => {
+                const quizScreen = document.getElementById('quiz-screen');
+                if (quizScreen) {
+                    quizScreen.classList.toggle('palette-collapsed');
+                    const isCollapsed = quizScreen.classList.contains('palette-collapsed');
+                    toggleSidebarBtn.innerHTML = isCollapsed ? '<i class="ph-bold ph-caret-left"></i>' : '<i class="ph-bold ph-caret-right"></i>';
+                }
+            });
+        }
+
+        // ── Mobile Palette Drawer Handlers ──
+        const mobilePaletteBtn = document.getElementById('mobile-palette-toggle-btn');
+        const paletteBackdrop = document.getElementById('exam-palette-backdrop');
+        const openMobilePalette = () => {
+            const quizScreen = document.getElementById('quiz-screen');
+            if (quizScreen) {
+                this.renderPalette();
+                quizScreen.classList.add('mobile-palette-open');
+            }
+        };
+        const closeMobilePalette = () => {
+            const quizScreen = document.getElementById('quiz-screen');
+            if (quizScreen) {
+                quizScreen.classList.remove('mobile-palette-open');
+            }
+        };
+        if (mobilePaletteBtn) mobilePaletteBtn.addEventListener('click', openMobilePalette);
+        if (paletteBackdrop) paletteBackdrop.addEventListener('click', closeMobilePalette);
+
+        // ── Palette Grid Modal / Sheet Handlers (Fallback) ──
         const openPaletteBtn = document.getElementById('open-palette-btn');
         const ribbonPaletteBtn = document.getElementById('ribbon-palette-btn');
         const closePaletteBtn = document.getElementById('close-palette-btn');
@@ -102,6 +147,8 @@ const QuizEngine = {
             if (paletteModalOverlay) {
                 this.renderPalette();
                 paletteModalOverlay.classList.add('active');
+            } else {
+                openMobilePalette();
             }
         };
 
@@ -109,6 +156,7 @@ const QuizEngine = {
             if (paletteModalOverlay) {
                 paletteModalOverlay.classList.remove('active');
             }
+            closeMobilePalette();
         };
 
         if (openPaletteBtn) openPaletteBtn.addEventListener('click', openPalette);
@@ -121,8 +169,9 @@ const QuizEngine = {
         }
 
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && paletteModalOverlay && paletteModalOverlay.classList.contains('active')) {
-                closePalette();
+            if (e.key === 'Escape') {
+                if (paletteModalOverlay && paletteModalOverlay.classList.contains('active')) closePalette();
+                closeMobilePalette();
             }
         });
 
@@ -186,6 +235,18 @@ const QuizEngine = {
         if (this.els.nextBtn) this.els.nextBtn.disabled = false;
         if (this.els.submitTestBtn) this.els.submitTestBtn.disabled = false;
         if (this.els.backBtn) this.els.backBtn.disabled = false;
+
+        // Sync theme toggle and subject badges
+        const quizThemeToggle = document.getElementById('quiz-theme-toggle');
+        if (quizThemeToggle) {
+            const isDark = document.body.classList.contains('dark-theme');
+            quizThemeToggle.innerHTML = isDark ? '<i class="ph-fill ph-sun"></i>' : '<i class="ph-fill ph-moon"></i>';
+        }
+        const subjectTag = document.getElementById('exam-subject-tag');
+        const paletteSecTitle = document.getElementById('palette-section-title');
+        const topicName = testMeta?.topic || testMeta?.sourceName || 'General Aptitude';
+        if (subjectTag) subjectTag.textContent = topicName;
+        if (paletteSecTitle) paletteSecTitle.textContent = topicName;
 
         this.showScreen(this.els.quizScreen);
         this.startTimer();
@@ -251,6 +312,9 @@ const QuizEngine = {
         const formatted = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 
         this.els.timerText.textContent = formatted;
+
+        const paletteSecTimer = document.getElementById('palette-section-timer');
+        if (paletteSecTimer) paletteSecTimer.textContent = formatted;
 
         this.els.timerText.classList.remove('warning', 'danger');
         if (this.state.timerMode === 'countdown') {
@@ -356,7 +420,8 @@ const QuizEngine = {
                 if (q.userAnswer === originalOpt) {
                     btn.classList.add('selected');
                 }
-                btn.innerHTML = this.formatMathText(dispOpt);
+                const optLetter = String.fromCharCode(65 + idx);
+                btn.innerHTML = `<span class="opt-letter">${optLetter}</span><div class="opt-content">${this.formatMathText(dispOpt)}</div>`;
                 btn.onclick = (e) => this.selectOption(originalOpt, e);
                 this.els.optionsContainer.appendChild(btn);
             });
@@ -510,9 +575,21 @@ const QuizEngine = {
                 }
                 const overlay = document.getElementById('palette-modal-overlay');
                 if (overlay) overlay.classList.remove('active');
+                const quizScreen = document.getElementById('quiz-screen');
+                if (quizScreen) quizScreen.classList.remove('mobile-palette-open');
             };
             this.els.questionPaletteGrid.appendChild(btn);
         });
+
+        // Update Modern Platform Shape Count Badges
+        const countAns = document.getElementById('leg-count-answered');
+        if (countAns) countAns.textContent = counts.answered;
+        const countNotAns = document.getElementById('leg-count-not-answered');
+        if (countNotAns) countNotAns.textContent = counts.not_answered;
+        const countMarked = document.getElementById('leg-count-marked');
+        if (countMarked) countMarked.textContent = counts.marked + counts.answered_marked;
+        const countNotVis = document.getElementById('leg-count-not-visited');
+        if (countNotVis) countNotVis.textContent = counts.not_visited;
 
         const legAns = document.getElementById('leg-ans');
         if (legAns) legAns.textContent = `Answered (${counts.answered})`;

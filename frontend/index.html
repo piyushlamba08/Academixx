@@ -70,6 +70,16 @@
                 <button id="theme-toggle" class="theme-toggle-btn" title="Toggle Theme">
                     <i class="ph-fill ph-moon"></i>
                 </button>
+                <div class="settings-menu-container">
+                    <button id="settings-toggle-btn" class="theme-toggle-btn settings-btn" title="Settings" aria-label="Settings">
+                        <i class="ph-bold ph-gear"></i>
+                    </button>
+                    <div id="settings-dropdown" class="settings-dropdown-menu" style="display: none;">
+                        <button id="btn-wipe-data" class="settings-dropdown-item danger" type="button">
+                            <i class="ph-bold ph-trash"></i> Wipe All Data
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </header>
@@ -1092,47 +1102,80 @@
         </div>
 
         <!-- ============================================================
-             QUIZ SCREEN — CLEAN CENTERED EXAM WITH TOP RIBBON & GRID MODAL
+             QUIZ SCREEN — PROFESSIONAL SPLIT EXAM PLATFORM LAYOUT
              ============================================================ -->
         <div id="quiz-screen" class="screen exam-layout">
-            <!-- Header -->
-            <div class="exam-header">
-                <div class="exam-title">Mock Test Examination</div>
-                <div class="exam-timer">
-                    <span class="timer-label">Time Left:</span>
-                    <span id="timer-text" class="timer-badge">00:00</span>
-                    <button id="exit-quiz-btn" class="pill-btn danger-text">Exit</button>
+            <!-- 1. Top Header Bar -->
+            <header class="exam-header">
+                <div class="exam-header-left">
+                    <div class="exam-timer-pill">
+                        <i class="ph-bold ph-clock"></i>
+                        <span class="timer-label">Time Left:</span>
+                        <span id="timer-text" class="timer-badge">00:00</span>
+                    </div>
+                </div>
+                <div class="exam-header-center">
+                    <div class="exam-brand-badge">
+                        <i class="ph-bold ph-lightning"></i>
+                        <span>Academixx Mock Exam</span>
+                    </div>
+                </div>
+                <div class="exam-header-right">
+                    <button id="quiz-theme-toggle" class="exam-top-btn" title="Toggle Dark/Light Mode" type="button">
+                        <i class="ph-fill ph-moon"></i>
+                    </button>
+                    <button id="exit-quiz-btn" class="exam-exit-btn" type="button">
+                        <i class="ph-bold ph-sign-out"></i>
+                        <span>Exit</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 2. Sub-Header Section Ribbon -->
+            <div class="exam-sub-ribbon">
+                <div class="sub-ribbon-left">
+                    <div class="exam-section-badge">
+                        <i class="ph-bold ph-caret-left"></i>
+                        <span id="exam-subject-tag">General Aptitude</span>
+                        <i class="ph-bold ph-info" title="Section Information"></i>
+                        <i class="ph-bold ph-caret-right"></i>
+                    </div>
+                </div>
+                <div class="sub-ribbon-right">
+                    <div class="view-lang-wrap">
+                        <span class="view-lang-lbl">View in</span>
+                        <button id="translate-question-btn" class="exam-translate-toggle-btn" type="button" title="Translate to Hindi">
+                            <i class="ph-bold ph-translate"></i>
+                            <span id="translate-btn-label">हिंदी</span>
+                        </button>
+                    </div>
+                    <div class="candidate-profile-badge">
+                        <i class="ph-fill ph-user-circle"></i>
+                        <span>Aspirant</span>
+                    </div>
+                    <button id="mobile-palette-toggle-btn" class="exam-icon-btn mobile-palette-btn" title="Open Question Palette" type="button">
+                        <i class="ph-bold ph-squares-four"></i>
+                    </button>
                 </div>
             </div>
             
-            <!-- Body -->
-            <div class="exam-body">
-                <!-- Main Centered Question Area -->
-                <div class="exam-left-pane">
-                    <!-- Top Horizontal Question Strip (Previous 2, Current, Next 2) -->
-                    <div class="exam-question-ribbon-wrap">
-                        <div class="question-header">
+            <!-- 3. Main Split Body -->
+            <div class="exam-body" id="exam-main-body">
+                <!-- Left Pane: Question Workspace (~75%) -->
+                <main class="exam-left-pane">
+                    <!-- Question Header Strip -->
+                    <div class="question-header">
+                        <div class="q-header-left">
                             <span id="question-number-badge">Question No. 1</span>
-                            <div class="question-header-right">
-                                <button id="translate-question-btn" class="exam-translate-toggle-btn" type="button" title="Translate to Hindi">
-                                    <i class="ph-bold ph-translate"></i>
-                                    <span id="translate-btn-label">हिंदी</span>
-                                </button>
-                                <span id="question-count-badge" class="question-progress-count"></span>
-                                <button id="ribbon-palette-btn" class="exam-icon-btn" title="Open Question Palette Grid" aria-label="Question Grid">
-                                    <i class="ph-bold ph-squares-four"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div id="exam-question-ribbon" class="exam-question-ribbon">
-                            <!-- Injected dynamically via QuizEngine -->
                         </div>
                     </div>
-                    
+
+                    <!-- Question Text Body -->
                     <div class="question-container modern-question">
                         <span id="question-text"></span>
                     </div>
                     
+                    <!-- Options List (A, B, C, D) -->
                     <div id="options-container" class="exam-options-list">
                         <!-- Options injected dynamically via JS -->
                     </div>
@@ -1141,50 +1184,65 @@
                     <div id="manual-input-container" class="options-container" style="display: none;">
                         <input type="text" id="manual-answer-input" placeholder="Enter your answer" class="modern-input">
                     </div>
-                </div>
-            </div>
-            
-            <!-- Question Palette Modal / Drawer Overlay -->
-            <div id="palette-modal-overlay" class="palette-modal-overlay">
-                <div class="palette-modal-content">
-                    <div class="palette-modal-header">
-                        <div class="palette-modal-title">
-                            <i class="ph-bold ph-squares-four"></i> Question Palette
+                </main>
+
+                <!-- Sidebar Collapse Toggle Button on the Divider -->
+                <button id="toggle-palette-sidebar-btn" class="palette-collapse-toggle-btn" title="Toggle Question Palette" type="button">
+                    <i class="ph-bold ph-caret-right"></i>
+                </button>
+
+                <!-- Right Pane: Integrated Live Question Palette (~25%) -->
+                <aside class="exam-palette-pane" id="exam-palette-pane">
+                    <!-- Platform Legend 2x2 Grid -->
+                    <div class="palette-legend-grid">
+                        <div class="legend-badge-item">
+                            <div class="legend-shape shape-ans"><span id="leg-count-answered">0</span></div>
+                            <span class="legend-name">Answered</span>
                         </div>
-                        <button id="close-palette-btn" class="palette-modal-close" title="Close Grid">✕</button>
+                        <div class="legend-badge-item">
+                            <div class="legend-shape shape-not-ans"><span id="leg-count-not-answered">0</span></div>
+                            <span class="legend-name">Not Answered</span>
+                        </div>
+                        <div class="legend-badge-item">
+                            <div class="legend-shape shape-marked"><span id="leg-count-marked">0</span></div>
+                            <span class="legend-name">Marked</span>
+                        </div>
+                        <div class="legend-badge-item">
+                            <div class="legend-shape shape-not-vis"><span id="leg-count-not-visited">0</span></div>
+                            <span class="legend-name">Not Visited</span>
+                        </div>
                     </div>
 
-                    <div class="palette-legend">
-                        <div class="legend-row">
-                            <div class="legend-item"><span class="badge answered"></span> Answered</div>
-                            <div class="legend-item"><span class="badge not-answered"></span> Not Answered</div>
-                        </div>
-                        <div class="legend-row">
-                            <div class="legend-item"><span class="badge not-visited"></span> Not Visited</div>
-                            <div class="legend-item"><span class="badge marked"></span> Marked</div>
-                        </div>
-                        <div class="legend-row">
-                            <div class="legend-item"><span class="badge answered-marked"></span> Answered & Marked</div>
+                    <!-- Section Banner -->
+                    <div class="palette-section-banner">
+                        <span id="palette-section-title">General Aptitude</span>
+                        <span id="palette-section-timer" class="palette-sec-timer">00:00</span>
+                    </div>
+
+                    <!-- Choose a Question Grid -->
+                    <div class="palette-grid-wrap">
+                        <div class="palette-grid-head">Choose a Question</div>
+                        <div id="question-palette-grid" class="palette-grid">
+                            <!-- Question Buttons injected dynamically via QuizEngine -->
                         </div>
                     </div>
-                    
-                    <div id="question-palette-grid" class="palette-grid">
-                        <!-- Buttons injected dynamically via QuizEngine -->
-                    </div>
-                </div>
+                </aside>
             </div>
+
+            <!-- Mobile Palette Overlay Backdrop -->
+            <div id="exam-palette-backdrop" class="exam-palette-backdrop"></div>
             
-            <!-- Footer -->
-            <div class="exam-footer">
+            <!-- 4. Fixed Bottom Action Footer -->
+            <footer class="exam-footer">
                 <div class="footer-left">
-                    <button id="back-btn" class="secondary-btn">Previous</button>
-                    <button id="mark-review-btn" class="secondary-btn" style="margin-left: 10px;">Mark for Review & Next</button>
+                    <button id="back-btn" class="secondary-btn" type="button">Previous</button>
+                    <button id="mark-review-btn" class="secondary-btn btn-mark-review" type="button">Mark for Review & Next</button>
                 </div>
                 <div class="footer-right">
-                    <button id="next-btn" class="primary-btn">Next</button>
-                    <button id="submit-test-btn" class="primary-btn submit-btn" style="display: none;">Submit Section</button>
+                    <button id="next-btn" class="primary-btn" type="button">Next</button>
+                    <button id="submit-test-btn" class="primary-btn submit-btn" style="display: none;" type="button">Submit Section</button>
                 </div>
-            </div>
+            </footer>
         </div>
 
         <!-- Result Screen (Option 1 Design) -->
@@ -1661,6 +1719,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- Wipe Stored Data Confirmation Modal -->
+        <div id="wipe-confirm-modal" class="modal-overlay">
+            <div class="modal-content">
+                <div class="modal-icon-wrap"><i class="ph-bold ph-trash"></i></div>
+                <h2>Wipe All Data</h2>
+                <p>Are you sure you want to wipe out all stored data?</p>
+                <div class="modal-actions-row">
+                    <button id="wipe-cancel-btn" class="secondary-btn" type="button">Cancel</button>
+                    <button id="wipe-confirm-btn" class="primary-btn danger-btn" type="button">Yes</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="progress-store.js?v=7"></script>
@@ -1694,6 +1765,66 @@
                 themeBtn.innerHTML = '<i class="ph-fill ph-moon"></i>';
             }
         });
+
+        // Settings Menu & Wipe Data Logic
+        const settingsToggleBtn = document.getElementById('settings-toggle-btn');
+        const settingsDropdown = document.getElementById('settings-dropdown');
+        const btnWipeData = document.getElementById('btn-wipe-data');
+        const wipeModal = document.getElementById('wipe-confirm-modal');
+        const wipeCancelBtn = document.getElementById('wipe-cancel-btn');
+        const wipeConfirmBtn = document.getElementById('wipe-confirm-btn');
+
+        if (settingsToggleBtn && settingsDropdown) {
+            settingsToggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isShown = settingsDropdown.style.display !== 'none';
+                settingsDropdown.style.display = isShown ? 'none' : 'block';
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!settingsDropdown.contains(e.target) && e.target !== settingsToggleBtn) {
+                    settingsDropdown.style.display = 'none';
+                }
+            });
+        }
+
+        if (btnWipeData && wipeModal) {
+            btnWipeData.addEventListener('click', () => {
+                if (settingsDropdown) settingsDropdown.style.display = 'none';
+                wipeModal.classList.add('active');
+            });
+        }
+
+        if (wipeCancelBtn && wipeModal) {
+            wipeCancelBtn.addEventListener('click', () => {
+                wipeModal.classList.remove('active');
+            });
+        }
+
+        if (wipeConfirmBtn && wipeModal) {
+            wipeConfirmBtn.addEventListener('click', async () => {
+                wipeConfirmBtn.disabled = true;
+                wipeConfirmBtn.textContent = 'Wiping...';
+                try {
+                    await ProgressStore.wipeAllData();
+                    if (typeof refreshHomeStats === 'function') {
+                        await refreshHomeStats();
+                    }
+                    if (typeof ProgressDashboard !== 'undefined' && ProgressDashboard.renderOverview) {
+                        await ProgressDashboard.renderOverview();
+                    }
+                    if (typeof CalcAnalytics !== 'undefined' && CalcAnalytics.renderAll) {
+                        await CalcAnalytics.renderAll();
+                    }
+                } catch (err) {
+                    console.error('Wipe data error:', err);
+                } finally {
+                    wipeConfirmBtn.disabled = false;
+                    wipeConfirmBtn.textContent = 'Yes';
+                    wipeModal.classList.remove('active');
+                }
+            });
+        }
 
         // Catalog Filter Tabs
         function filterCatalog(category, btn) {

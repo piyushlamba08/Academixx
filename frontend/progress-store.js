@@ -309,6 +309,31 @@ const ProgressStore = (() => {
         }
     }
 
+    async function wipeAllData() {
+        let remoteSuccess = false;
+        try {
+            const res = await fetch(`${API_BASE}/clean-data`, { method: 'DELETE' });
+            if (res.ok) {
+                remoteSuccess = true;
+            }
+        } catch (e) {
+            console.warn('[ProgressStore] Remote wipe request failed', e);
+        }
+
+        // Wipe local caches & backup storage so no lingering zombie items remain
+        clearLocalTests();
+        try {
+            localStorage.removeItem(LOCAL_KEY);
+            localStorage.removeItem('academix_streak');
+            localStorage.removeItem('academix_mistake_tags');
+        } catch (e) {
+            console.warn('[ProgressStore] Failed to clear local storage items', e);
+        }
+        invalidateCache();
+
+        return remoteSuccess;
+    }
+
     return { 
         saveTest, 
         getTests, 
@@ -320,6 +345,7 @@ const ProgressStore = (() => {
         getMistakeTags, 
         setMistakeTag,
         getSyllabus,
-        saveSyllabus
+        saveSyllabus,
+        wipeAllData
     };
 })();

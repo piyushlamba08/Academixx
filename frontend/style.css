@@ -233,6 +233,63 @@ body.dark-theme .app-nav-link.active {
     transform: rotate(15deg);
 }
 
+.settings-menu-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.settings-btn:hover {
+    transform: rotate(45deg) !important;
+    color: var(--primary);
+}
+
+.settings-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    min-width: 170px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    padding: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+    z-index: 1000;
+    backdrop-filter: blur(16px);
+    animation: fadeIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.settings-dropdown-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 9px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.settings-dropdown-item.danger {
+    color: #ef4444;
+}
+
+.settings-dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.settings-dropdown-item i {
+    font-size: 1.05rem;
+}
+
 /* ============================================================
    MAIN CONTAINER & SCREEN VISIBILITY
    ============================================================ */
@@ -2746,7 +2803,11 @@ body.dark-theme .setting-chip-pill input[type="checkbox"]:checked + .chip-inner 
    EXAM / QUIZ LAYOUT (TCS iON / Digital Ion Layout)
    PRESERVED EXACTLY AS SPECIFIED — DO NOT MODIFY
    ============================================================ */
+/* ============================================================
+   EXAMINATION SCREEN — PROFESSIONAL SPLIT EXAM PLATFORM LAYOUT
+   ============================================================ */
 #quiz-screen.exam-layout {
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -2759,114 +2820,750 @@ body.dark-theme .setting-chip-pill input[type="checkbox"]:checked + .chip-inner 
     border: none;
     background: var(--bg-page);
     z-index: 1000;
+    flex-direction: column;
+    overflow: hidden;
 }
 
-#quiz-screen.exam-layout #question-text {
-    font-size: 2rem;
+#quiz-screen.exam-layout.active {
+    display: flex;
 }
 
+/* ── 1. Top Header Bar ── */
 .exam-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.75rem 2rem;
-    background: var(--card-bg);
-    border-bottom: 1px solid var(--card-border);
-    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    min-height: 60px;
+    padding: 0.65rem 1.5rem;
+    background: #0f172a;
+    color: #ffffff;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+    min-height: 52px;
     gap: 1rem;
+    flex-shrink: 0;
+    z-index: 100;
 }
 
-.exam-title { 
-    font-size: 1.12rem; 
-    font-weight: 800; 
-    color: var(--text-primary); 
+body.dark-theme .exam-header {
+    background: #0a0f1d;
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.exam-header-left, .exam-header-right {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    letter-spacing: -0.01em;
+    gap: 0.75rem;
 }
 
-.exam-timer { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.75rem; 
-    font-size: 0.88rem; 
-}
-
-.timer-label {
-    color: var(--text-secondary);
-    font-weight: 600;
-}
-
-.timer-badge {
-    background: rgba(79, 70, 229, 0.08);
-    color: var(--primary);
-    border: 1px solid rgba(79, 70, 229, 0.2);
-    padding: 0.35rem 0.85rem;
-    border-radius: 9px;
-    font-family: var(--font-mono);
-    font-weight: 800;
-    font-size: 1.05rem;
-    letter-spacing: 0.5px;
-    min-width: 65px;
-    text-align: center;
-    display: inline-block;
-}
-
-.pill-btn.danger-text {
-    background: rgba(239, 68, 68, 0.08);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.25);
-    padding: 0.4rem 0.95rem;
-    border-radius: 9px;
-    font-weight: 700;
-    font-size: 0.86rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
+.exam-header-center {
+    display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.pill-btn.danger-text:hover {
+.exam-timer-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    color: #94a3b8;
+}
+
+.exam-timer-pill i {
+    font-size: 1.1rem;
+    color: #60a5fa;
+}
+
+.timer-label {
+    color: #94a3b8;
+    font-weight: 600;
+}
+
+.timer-badge {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.35);
+    padding: 0.25rem 0.65rem;
+    border-radius: 7px;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    min-width: 60px;
+    text-align: center;
+}
+
+.timer-badge.warning {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.4);
+}
+
+.timer-badge.danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.4);
+    animation: pulse 1s infinite;
+}
+
+.exam-brand-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.01em;
+}
+
+.exam-brand-badge i {
+    color: #6366f1;
+    font-size: 1.25rem;
+}
+
+.exam-top-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 1.05rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exam-top-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #60a5fa;
+    border-color: rgba(96, 165, 250, 0.45);
+    transform: translateY(-1px);
+}
+
+.exam-exit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.42rem 0.95rem;
+    border-radius: 9px;
+    background: rgba(239, 68, 68, 0.16);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #fca5a5;
+    font-family: var(--font-sans);
+    font-size: 0.84rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exam-exit-btn i {
+    font-size: 1rem;
+}
+
+.exam-exit-btn:hover {
     background: #ef4444;
     color: #ffffff;
     border-color: #ef4444;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-.pill-btn.danger-text:active {
-    transform: translateY(0);
+/* ── 2. Sub-Header Section Ribbon ── */
+.exam-sub-ribbon {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 1.5rem;
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border-subtle);
+    min-height: 44px;
+    flex-shrink: 0;
+    z-index: 90;
 }
 
+.sub-ribbon-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.exam-section-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+    padding: 0.25rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.exam-section-badge i {
+    font-size: 0.95rem;
+    color: var(--primary);
+    cursor: pointer;
+}
+
+.sub-ribbon-right {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.view-lang-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.view-lang-lbl {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+}
+
+.candidate-profile-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+}
+
+.candidate-profile-badge i {
+    font-size: 1.15rem;
+    color: var(--primary);
+}
+
+#quiz-screen .mobile-palette-btn,
+.mobile-palette-btn {
+    display: none !important;
+}
+
+/* ── 3. Main Split Workspace Body ── */
 .exam-body {
     display: flex;
-    height: calc(100vh - 120px);
+    flex: 1;
+    height: calc(100vh - 156px); /* 100vh - header(52px) - sub-ribbon(44px) - footer(60px) */
+    position: relative;
     overflow: hidden;
 }
 
 .exam-left-pane {
     flex: 1;
-    padding: 1.5rem 3rem;
+    padding: 1.5rem 2.5rem;
     overflow-y: auto;
-    border-right: 1px solid var(--card-border);
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    transition: all 0.25s ease;
+}
+
+.question-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-subtle);
+    width: 100%;
+}
+
+#question-number-badge {
+    font-family: var(--font-heading);
+    font-weight: 800;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+}
+
+.question-marks-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.2rem 0.65rem;
+    border-radius: 6px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-subtle);
+}
+
+.mark-pos {
+    color: #10b981;
+}
+
+.mark-neg {
+    color: #ef4444;
+}
+
+#quiz-screen.exam-layout #question-text {
+    font-size: 1.75rem;
+    line-height: 1.45;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+/* Options with Clean Platform Badges (A, B, C, D) */
+.exam-options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 850px;
+    margin-bottom: 2rem;
+}
+
+.exam-layout .option-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.85rem 1.15rem;
+    border-radius: 12px;
+    background: var(--bg-surface);
+    border: 1.5px solid var(--border-subtle);
+    cursor: pointer;
+    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    text-align: left;
+    width: 100%;
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.exam-layout .option-btn::before {
+    display: none !important;
+}
+
+.exam-layout .opt-letter {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    border: 1px solid var(--border-subtle);
+    transition: all 0.18s ease;
+}
+
+.exam-layout .opt-content {
+    flex: 1;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.exam-layout .option-btn:hover {
+    border-color: var(--primary);
+    background: var(--bg-subtle);
+    transform: translateX(2px);
+}
+
+.exam-layout .option-btn.selected {
+    border-color: var(--primary);
+    background: rgba(99, 102, 241, 0.08);
+    box-shadow: 0 0 0 1.5px var(--primary);
+}
+
+.exam-layout .option-btn.selected .opt-letter {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+}
+
+body.dark-theme .exam-layout .option-btn.selected {
+    background: rgba(99, 102, 241, 0.15);
+    border-color: var(--primary);
+}
+
+/* ── Divider Toggle Button ── */
+.palette-collapse-toggle-btn {
+    position: absolute;
+    right: 320px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 22px;
+    height: 48px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-right: none;
+    border-radius: 8px 0 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+    z-index: 80;
+    transition: right 0.25s ease, background 0.2s ease, color 0.2s ease;
+    box-shadow: -2px 0 6px rgba(0,0,0,0.04);
+}
+
+.palette-collapse-toggle-btn:hover {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+/* Collapsed State on Desktop */
+#quiz-screen.palette-collapsed .exam-palette-pane {
+    display: none;
+}
+
+#quiz-screen.palette-collapsed .palette-collapse-toggle-btn {
+    right: 0;
+}
+
+/* ── Right Palette Pane (Desktop Platform Style) ── */
+.exam-palette-pane {
+    width: 320px;
+    background: var(--bg-surface);
+    border-left: 1px solid var(--border-subtle);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    overflow-y: auto;
+    z-index: 70;
+    transition: width 0.25s ease;
+}
+
+.palette-user-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-subtle);
+}
+
+.palette-user-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+
+.palette-user-meta {
     display: flex;
     flex-direction: column;
 }
 
+.palette-user-name {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.palette-user-status {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* Platform 2x2 Legend */
+.palette-legend-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    background: var(--bg-surface);
+}
+
+.legend-badge-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* ── Exact Platform Shapes for Legend Badges ── */
+.legend-shape {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    font-weight: 800;
+    flex-shrink: 0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.12);
+}
+
+.legend-shape.shape-ans {
+    background: #22c55e;
+    clip-path: polygon(50% 0%, 100% 32%, 100% 100%, 0% 100%, 0% 32%);
+    padding-top: 4px;
+}
+
+.legend-shape.shape-not-ans {
+    background: #ea580c;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 68%, 50% 100%, 0% 68%);
+    padding-bottom: 4px;
+}
+
+.legend-shape.shape-marked {
+    background: #8b5cf6;
+    border-radius: 50%;
+}
+
+.legend-shape.shape-not-vis {
+    background: #64748b;
+    border-radius: 6px;
+}
+
+.legend-name {
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    line-height: 1.2;
+}
+
+.palette-section-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.65rem 1rem;
+    background: var(--bg-subtle);
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.palette-sec-timer {
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--primary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    padding: 0.15rem 0.45rem;
+    border-radius: 5px;
+}
+
+.palette-grid-wrap {
+    padding: 0.85rem 1rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.palette-grid-head {
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+    text-align: center;
+}
+
+.palette-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem 0.65rem;
+    padding: 0.35rem 0.15rem;
+}
+
+/* ── Exact Platform Shapes for Question Grid Buttons ── */
+.palette-btn {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 800;
+    color: #ffffff;
+    cursor: pointer;
+    background: #64748b;
+    border-radius: 6px;
+    transition: transform 0.15s ease, outline 0.15s ease;
+    font-size: 0.92rem;
+    user-select: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+}
+
+.palette-btn:hover {
+    transform: scale(1.08);
+}
+
+/* 1. Answered: Green upward home plate / roof */
+.palette-btn.answered {
+    background: #22c55e !important;
+    clip-path: polygon(50% 0%, 100% 32%, 100% 100%, 0% 100%, 0% 32%);
+    border-radius: 0 !important;
+    padding-top: 5px;
+}
+
+/* 2. Not Answered: Red-Orange downward shield */
+.palette-btn.not-answered {
+    background: #ea580c !important;
+    clip-path: polygon(0% 0%, 100% 0%, 100% 68%, 50% 100%, 0% 68%);
+    border-radius: 0 !important;
+    padding-bottom: 5px;
+}
+
+/* 3. Marked for Review: Purple Circle */
+.palette-btn.marked {
+    background: #8b5cf6 !important;
+    border-radius: 50% !important;
+    clip-path: none !important;
+}
+
+/* 4. Answered & Marked: Purple circle with green corner dot */
+.palette-btn.answered-marked {
+    background: #8b5cf6 !important;
+    border-radius: 50% !important;
+    position: relative;
+    clip-path: none !important;
+}
+
+.palette-btn.answered-marked::after {
+    content: '';
+    position: absolute;
+    right: 0px;
+    bottom: 0px;
+    width: 9px;
+    height: 9px;
+    background: #22c55e;
+    border-radius: 50%;
+    border: 1.5px solid var(--bg-surface);
+}
+
+/* 5. Not Visited: Slate Grey Rounded Square */
+.palette-btn.not-visited {
+    background: #64748b;
+    border-radius: 6px;
+    clip-path: none;
+}
+
+/* Active / Current Question Focus (Outline & Drop-Shadow conforming to custom polygon) */
+.palette-btn.current {
+    filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.95)) drop-shadow(0 0 1px #2563eb);
+    outline: 2.5px solid #3b82f6 !important;
+    outline-offset: 2.5px !important;
+    transform: scale(1.08);
+    z-index: 5;
+}
+
+/* ── 4. Fixed Bottom Action Footer ── */
 .exam-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0.5rem 2rem;
-    background: var(--card-bg);
-    border-top: 1px solid var(--card-border);
-    position: absolute;
-    bottom: 0;
-    width: 100%;
+    padding: 0.65rem 1.75rem;
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
     height: 60px;
+    width: 100%;
+    flex-shrink: 0;
+    z-index: 100;
+}
+
+.footer-left, .footer-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.btn-mark-review {
+    background: var(--bg-subtle) !important;
+    border-color: var(--border-subtle) !important;
+}
+
+.btn-mark-review:hover {
+    border-color: #8b5cf6 !important;
+    color: #8b5cf6 !important;
+}
+
+/* Mobile Overlay Backdrop */
+.exam-palette-backdrop {
+    display: none;
+}
+
+/* ── Mobile & Tablet Responsiveness (< 900px) ── */
+@media (max-width: 900px) {
+    .exam-header {
+        padding: 0.5rem 1rem;
+    }
+    .exam-brand-badge span {
+        display: none;
+    }
+    .timer-label {
+        display: none;
+    }
+    .exam-sub-ribbon {
+        padding: 0.4rem 1rem;
+    }
+    #quiz-screen .mobile-palette-btn,
+    .mobile-palette-btn {
+        display: flex !important;
+    }
+    #quiz-screen .palette-collapse-toggle-btn,
+    .palette-collapse-toggle-btn {
+        display: none !important;
+    }
+    .exam-left-pane {
+        padding: 1rem 1rem;
+    }
+    #quiz-screen.exam-layout #question-text {
+        font-size: 1.35rem;
+    }
+    .exam-options-list {
+        max-width: 100%;
+    }
+    .exam-footer {
+        padding: 0.5rem 1rem;
+    }
+
+    /* Mobile Palette Slide-Out Drawer */
+    .exam-palette-pane {
+        position: fixed;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 100vh;
+        z-index: 2200;
+        transform: translateX(100%);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        box-shadow: -6px 0 24px rgba(0, 0, 0, 0.3);
+    }
+
+    #quiz-screen.mobile-palette-open .exam-palette-pane {
+        transform: translateX(0);
+    }
+
+    #quiz-screen.mobile-palette-open .exam-palette-backdrop {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: 2100;
+    }
 }
 
 .exam-layout .primary-btn, .exam-layout .secondary-btn {
@@ -3117,58 +3814,6 @@ body.dark-theme .setting-chip-pill input[type="checkbox"]:checked + .chip-inner 
     flex-direction: column;
     gap: 0.6rem;
     margin-top: 1.5rem;
-}
-
-.exam-layout .option-btn {
-    text-align: left;
-    padding: 0.85rem 1.15rem;
-    font-size: 0.95rem;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    border-radius: 10px;
-    border: 1px solid var(--border-subtle);
-    background: var(--card-bg);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    cursor: pointer;
-    color: var(--text-primary);
-}
-
-.exam-layout .option-btn:hover {
-    border-color: var(--primary);
-    background: var(--bg-subtle);
-}
-
-.exam-layout .option-btn::before {
-    content: '';
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    border: 2px solid var(--border-medium);
-    margin-right: 12px;
-    flex-shrink: 0;
-    transition: all 0.2s ease;
-}
-
-.exam-layout .option-btn.selected {
-    border-color: var(--primary);
-    background: rgba(79, 70, 229, 0.07);
-}
-
-.exam-layout .option-btn.selected::before {
-    border-color: var(--primary);
-    background-color: var(--primary);
-    box-shadow: inset 0 0 0 3px var(--card-bg);
-}
-
-body.dark-theme .exam-layout .option-btn.selected {
-    background: rgba(99, 102, 241, 0.15);
-    border-color: rgba(99, 102, 241, 0.4);
-}
-
-body.dark-theme .exam-layout .option-btn.selected::before {
-    box-shadow: inset 0 0 0 3px var(--card-bg);
 }
 
 /* Question Palette Modal / Bottom Sheet */

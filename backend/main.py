@@ -432,6 +432,24 @@ def update_streak(streak_in: StreakIn, db: Session = Depends(get_db)):
     return StreakOut(bestStreak=streak.best_streak)
 
 
+@app.delete("/api/progress/clean-data")
+def clean_database_data(db: Session = Depends(get_db)):
+    """
+    Safely delete all stored progress data rows (tests, questions, mistakes, streaks).
+    Tables and schema are NEVER dropped or modified.
+    """
+    try:
+        db.query(db_models.TestQuestion).delete()
+        db.query(db_models.Test).delete()
+        db.query(db_models.Mistake).delete()
+        db.query(db_models.StreakRecord).delete()
+        db.commit()
+        return {"status": "ok", "message": "All stored test data wiped successfully"}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to wipe data: {str(e)}")
+
+
 # ── Syllabus Progress Endpoints (Cross-Device Cloud Sync) ──
 
 @app.get("/api/progress/syllabus", response_model=SyllabusOut)

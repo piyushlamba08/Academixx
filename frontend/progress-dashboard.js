@@ -1,7 +1,7 @@
 const ProgressDashboard = (() => {
     const byId = (id) => document.getElementById(id);
-    const escapeHtml = (text) => String(text ?? '').replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c]));
-    const formatDate = (date) => new Intl.DateTimeFormat('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' }).format(new Date(date));
+    const escapeHtml = (text) => String(text ?? '').replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
+    const formatDate = (date) => new Intl.DateTimeFormat('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(date));
     const formatTime = (seconds) => `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 
     function updateNavActive(activeTab) {
@@ -14,9 +14,9 @@ const ProgressDashboard = (() => {
         });
     }
 
-    async function open() {
+    async function open(pushHistory = true) {
         updateNavActive('analytics');
-        QuizEngine.showScreen(byId('dashboard-screen'));
+        QuizEngine.showScreen(byId('dashboard-screen'), pushHistory);
         await renderDashboard();
     }
 
@@ -48,20 +48,24 @@ const ProgressDashboard = (() => {
 
     function isMistakeNotebookEligible(mistake = {}) {
         const topic = (mistake.topic || '').toLowerCase();
-        // Disallow standard mental calculation topics
+        // Disallow standard mental calculation topics and Big Calculations
         const calcTopics = [
             'addition', 'subtraction', 'multiplication', 'division',
             'square', 'cube', 'squareroot', 'square root', 'tables',
             'percenttofraction', 'fractiontopercent', 'mental math',
             'percent → fraction', 'fraction → %', 'random calculation',
-            'speed math', 'calculation'
+            'speed math', 'calculation', 'calculations', 'big calculation',
+            'big calculations', 'bigcalc', 'bigcalculation', 'mixed calculation'
         ];
-        if (calcTopics.some(ct => topic === ct || topic.startsWith(ct))) {
+        if (calcTopics.some(ct => topic === ct || topic.startsWith(ct) || topic.includes(ct))) {
             return false;
         }
 
-        // Also check if question itself is a pure mental arithmetic question
+        // Also check if question itself is a pure mental arithmetic question or big calculation math markup
         const q = (mistake.question || '').toLowerCase();
+        if (q.includes('copy-math-container') || q.includes('copy-fraction') || q.includes('copy-whole-num') || q.includes('copy-den') || q.includes('copy-num') || q.includes('copy-op') || q.includes('copy-qmark')) {
+            return false;
+        }
         if ((q.includes('²') || q.includes('³') || q.includes('√')) && q.length < 30) {
             return false;
         }
@@ -72,9 +76,9 @@ const ProgressDashboard = (() => {
         return true;
     }
 
-    async function openNotebook() {
+    async function openNotebook(pushHistory = true) {
         updateNavActive('notebook');
-        QuizEngine.showScreen(byId('notebook-screen'));
+        QuizEngine.showScreen(byId('notebook-screen'), pushHistory);
         renderNotebook();
     }
 
@@ -89,15 +93,15 @@ const ProgressDashboard = (() => {
 
         const totals = tests.reduce((a, t) => {
             const totalQ = Number(t.total) || (Array.isArray(t.questions) ? t.questions.length : 0) || ((Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0)) || 0;
-            return { 
-                tests: a.tests + 1, 
-                correct: a.correct + (Number(t.correctCount) || 0), 
-                wrong: a.wrong + (Number(t.wrongCount) || 0), 
-                skipped: a.skipped + (Number(t.skippedCount) || 0), 
+            return {
+                tests: a.tests + 1,
+                correct: a.correct + (Number(t.correctCount) || 0),
+                wrong: a.wrong + (Number(t.wrongCount) || 0),
+                skipped: a.skipped + (Number(t.skippedCount) || 0),
                 total: a.total + totalQ,
                 duration: a.duration + (Number(t.durationSeconds) || 0)
             };
-        }, { tests:0, correct:0, wrong:0, skipped:0, total:0, duration:0 });
+        }, { tests: 0, correct: 0, wrong: 0, skipped: 0, total: 0, duration: 0 });
 
         const accuracyPct = totals.total > 0 ? Math.min(100, Math.round((totals.correct / totals.total) * 100)) : 0;
 
@@ -105,7 +109,7 @@ const ProgressDashboard = (() => {
         byId('dash-correct').textContent = totals.correct;
         byId('dash-wrong').textContent = totals.wrong;
         byId('dash-accuracy').textContent = `${accuracyPct}%`;
-        
+
         const streak = await ProgressStore.getBestStreak();
         const dashStreakEl = byId('dash-streak');
         if (dashStreakEl) dashStreakEl.textContent = streak;
@@ -142,14 +146,14 @@ const ProgressDashboard = (() => {
         if (slowEl) slowEl.textContent = totalMockSlow;
 
         const topics = {};
-        tests.forEach(t => { 
+        tests.forEach(t => {
             const totalQ = Number(t.total) || (Array.isArray(t.questions) ? t.questions.length : 0) || ((Number(t.correctCount) || 0) + (Number(t.wrongCount) || 0) + (Number(t.skippedCount) || 0)) || 0;
-            const x = topics[t.topic || 'General'] || (topics[t.topic || 'General'] = { tests:0, correct:0, wrong:0, skipped:0, total:0 }); 
-            x.tests++; 
-            x.correct += (Number(t.correctCount) || 0); 
-            x.wrong += (Number(t.wrongCount) || 0); 
-            x.skipped += (Number(t.skippedCount) || 0); 
-            x.total += totalQ; 
+            const x = topics[t.topic || 'General'] || (topics[t.topic || 'General'] = { tests: 0, correct: 0, wrong: 0, skipped: 0, total: 0 });
+            x.tests++;
+            x.correct += (Number(t.correctCount) || 0);
+            x.wrong += (Number(t.wrongCount) || 0);
+            x.skipped += (Number(t.skippedCount) || 0);
+            x.total += totalQ;
         });
 
         byId('topic-summary').innerHTML = Object.entries(topics).map(([topic, x]) => {
@@ -217,7 +221,7 @@ const ProgressDashboard = (() => {
 
     async function openTest(id) {
         const tests = await ProgressStore.getTests();
-        const test = tests.find(t => t.id === id); 
+        const test = tests.find(t => t.id === id);
         if (!test) return;
         QuizEngine.showStoredResult(test);
     }
@@ -311,6 +315,29 @@ const ProgressDashboard = (() => {
             topic: 'Selected Mistakes Revision',
             sourceName: `Mistake Practice (${selectedMistakes.length} Qs)`
         });
+    }
+
+    function stripHtmlForAi(text) {
+        if (!text || typeof text !== 'string') return '';
+        let t = text.replace(/<span class="copy-num">([^<]+)<\/span>\s*<span class="copy-den">([^<]+)<\/span>/gi, '$1/$2');
+        t = t.replace(/<span class="num">([^<]+)<\/span>\s*<span class="den">([^<]+)<\/span>/gi, '$1/$2');
+        t = t.replace(/<[^>]+>/g, ' ');
+        return t.replace(/\s+/g, ' ').trim();
+    }
+
+    function renderCleanQuestion(text) {
+        if (!text || typeof text !== 'string') return '';
+        let cleaned = text;
+        if (cleaned.includes('&lt;') && cleaned.includes('&gt;')) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = cleaned;
+            cleaned = txt.value;
+        }
+        if (cleaned.includes('copy-math-container') || cleaned.includes('copy-fraction') || cleaned.includes('copy-big-fraction') || cleaned.includes('<span class="fraction">')) {
+            return cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+        }
+        return cleaned.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="num">$1</span><span class="den">$2</span></span>');
     }
 
     function detectSubject(topic = '') {
@@ -412,7 +439,7 @@ const ProgressDashboard = (() => {
         const listEl = byId('notebook-list');
         const emptyEl = byId('notebook-empty');
         const toolbarEl = byId('notebook-selection-toolbar');
-        
+
         // Show shimmer skeleton while loading
         if (listEl && listEl.children.length === 0) {
             emptyEl.style.display = 'none';
@@ -426,7 +453,7 @@ const ProgressDashboard = (() => {
 
         const rawMistakes = await ProgressStore.getMistakes({ topic: 'all' });
         const mistakes = rawMistakes.filter(isMistakeNotebookEligible);
-        
+
         mistakes.forEach(m => {
             m.subject = detectSubject(m.topic);
             m.cleanTopic = extractCleanTopic(m.topic);
@@ -561,7 +588,7 @@ const ProgressDashboard = (() => {
                             <input type="checkbox" class="mistake-select-cb" data-key="${encodeURIComponent(q.key)}" ${isSelected ? 'checked' : ''} onchange="ProgressDashboard.toggleMistakeSelect('${encodeURIComponent(q.key)}', this.checked)">
                             <span class="custom-cb-box"></span>
                         </label>
-                        <span class="mistake-q-badge"><i class="ph-fill ph-x-circle"></i> Q${i+1}</span>
+                        <span class="mistake-q-badge"><i class="ph-fill ph-x-circle"></i> Q${i + 1}</span>
                         <span class="mistake-topic-tag">${escapeHtml(topicLabel)}</span>
                         ${priorityBadge}
                     </div>
@@ -576,7 +603,7 @@ const ProgressDashboard = (() => {
                     </div>
                 </div>
                 <div class="mistake-question-content">
-                    <div class="mistake-question-text">${escapeHtml(q.question)}</div>
+                    <div class="mistake-question-text">${renderCleanQuestion(q.question)}</div>
                 </div>
                 <div class="ai-trick-container" style="display: none;"></div>
                 <div class="mistake-footer">
@@ -587,7 +614,7 @@ const ProgressDashboard = (() => {
                     </div>
                     <div class="mistake-correct-answer">
                         <span>Correct Answer:</span>
-                        <strong>${escapeHtml(q.correctAnswer)}</strong>
+                        <strong>${renderCleanQuestion(q.correctAnswer)}</strong>
                     </div>
                 </div>
             </div>`;
@@ -617,12 +644,14 @@ const ProgressDashboard = (() => {
         `;
 
         try {
-            const res = await fetch('https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick', {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000/api/ai/shortcut-trick' : 'https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    question: decodeURIComponent(qTextEnc),
-                    correct_answer: decodeURIComponent(ansEnc),
+                    question: stripHtmlForAi(decodeURIComponent(qTextEnc)),
+                    correct_answer: stripHtmlForAi(decodeURIComponent(ansEnc)),
                     topic: decodeURIComponent(topicEnc)
                 })
             });
@@ -692,15 +721,15 @@ const ProgressDashboard = (() => {
         if (count !== 'all') questions = questions.slice(0, Number(count));
         QuizEngine.state.negativeMarking = false;
         QuizEngine.state.timerMode = 'stopwatch';
-        QuizEngine.startQuiz(questions.map(q => ({ 
-            question: q.question, 
-            options: q.options || [], 
-            correctAnswer: q.correctAnswer, 
-            userAnswer: null 
-        })), 0, { 
-            trackProgress: true, 
-            topic: byId('notebook-topic')?.value === 'all' ? 'Mistake Revision' : byId('notebook-topic')?.value, 
-            sourceName: 'Mistake Notebook Retest' 
+        QuizEngine.startQuiz(questions.map(q => ({
+            question: q.question,
+            options: q.options || [],
+            correctAnswer: q.correctAnswer,
+            userAnswer: null
+        })), 0, {
+            trackProgress: true,
+            topic: byId('notebook-topic')?.value === 'all' ? 'Mistake Revision' : byId('notebook-topic')?.value,
+            sourceName: 'Mistake Notebook Retest'
         });
     }
 
@@ -719,14 +748,14 @@ const ProgressDashboard = (() => {
         });
     });
 
-    return { 
-        open, 
-        openTest, 
-        openNotebook, 
-        renderDashboard, 
-        renderNotebook, 
-        practiceSingleMistake, 
-        showAiTrick, 
+    return {
+        open,
+        openTest,
+        openNotebook,
+        renderDashboard,
+        renderNotebook,
+        practiceSingleMistake,
+        showAiTrick,
         updateNavActive,
         toggleMistakeSelect,
         toggleSelectAll,
@@ -734,6 +763,7 @@ const ProgressDashboard = (() => {
         assignMistakeTag,
         filterByTagFromPanel,
         filterByTopicFromPanel,
-        setSubjectFilter
+        setSubjectFilter,
+        isMistakeEligible: isMistakeNotebookEligible
     };
 })();

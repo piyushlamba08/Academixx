@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Academix — Smart Mock Test & Quant Mastery</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
     <link rel="stylesheet" href="style.css?v=7">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -46,13 +47,13 @@
                     <i class="ph-bold ph-house"></i> Home
                 </button>
                 <button class="app-nav-link" data-tab="catalog" onclick="QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('catalog'); document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'});">
-                    <i class="ph-bold ph-grid-four"></i> Test Catalog
+                    <i class="ph-bold ph-grid-four"></i> Catalog
                 </button>
                 <button class="app-nav-link" data-tab="notebook" onclick="ProgressDashboard.openNotebook();">
-                    <i class="ph-bold ph-notebook"></i> Mistake Notebook
+                    <i class="ph-bold ph-notebook"></i> Notebook
                 </button>
                 <button class="app-nav-link" data-tab="analytics" onclick="ProgressDashboard.open();">
-                    <i class="ph-bold ph-chart-line-up"></i> Stats & Analytics
+                    <i class="ph-bold ph-chart-line-up"></i> Analytics
                 </button>
                 <button class="app-nav-link" data-tab="calc-analytics" onclick="CalcAnalytics.open();">
                     <i class="ph-bold ph-speedometer"></i> Calc Speed
@@ -61,7 +62,7 @@
                     <i class="ph-bold ph-book-open"></i> Syllabus
                 </button>
                 <button class="app-nav-link" data-tab="planner" onclick="DailyPlanner.open();">
-                    <i class="ph-bold ph-calendar-check"></i> Daily Planner
+                    <i class="ph-bold ph-calendar-check"></i> Planner
                 </button>
             </nav>
 
@@ -89,15 +90,15 @@
             </button>
             <button class="mobile-nav-link" data-tab="catalog" onclick="closeMobileDrawer(); QuizEngine.showScreen(document.getElementById('home-screen')); ProgressDashboard.updateNavActive('catalog'); document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'});">
                 <i class="ph-bold ph-grid-four"></i>
-                <span>Test Catalog</span>
+                <span>Catalog</span>
             </button>
             <button class="mobile-nav-link" data-tab="notebook" onclick="closeMobileDrawer(); ProgressDashboard.openNotebook();">
                 <i class="ph-bold ph-notebook"></i>
-                <span>Mistake Notebook</span>
+                <span>Notebook</span>
             </button>
             <button class="mobile-nav-link" data-tab="analytics" onclick="closeMobileDrawer(); ProgressDashboard.open();">
                 <i class="ph-bold ph-chart-line-up"></i>
-                <span>Stats & Analytics</span>
+                <span>Analytics</span>
             </button>
             <button class="mobile-nav-link" data-tab="calc-analytics" onclick="closeMobileDrawer(); CalcAnalytics.open();">
                 <i class="ph-bold ph-speedometer"></i>
@@ -109,7 +110,7 @@
             </button>
             <button class="mobile-nav-link" data-tab="planner" onclick="closeMobileDrawer(); DailyPlanner.open();">
                 <i class="ph-bold ph-calendar-check"></i>
-                <span>Daily Planner</span>
+                <span>Planner</span>
             </button>
         </nav>
     </aside>
@@ -119,20 +120,60 @@
         <!-- Home Screen: Mode Selection -->
         <div id="home-screen" class="screen active">
             
-            <!-- Hero / Welcome Banner -->
+            <!-- Hero / Welcome & Daily Goals Unified Card -->
             <div class="welcome-banner-card">
-                <div class="welcome-left">
-                    <span class="welcome-badge"><i class="ph-fill ph-sparkle"></i> AI-Powered Quant Practice</span>
-                    <h1>Welcome Back !</h1>
-                    <p class="welcome-subtitle">Rapid math drills, custom AI mocks from your files, and precision tracking for every mistake.</p>
+                <!-- Top Row: Welcome & Quick Actions -->
+                <div class="welcome-top-row">
+                    <div class="welcome-left">
+                        <h1 id="welcome-heading" class="typewriter-heading"><span class="typewriter-text">Welcome Back !</span><span class="typewriter-cursor"></span></h1>
+                    </div>
+                    <div class="welcome-quick-actions">
+                        <button class="hero-primary-btn" onclick="document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'})">
+                            <i class="ph-bold ph-play"></i> New Drill
+                        </button>
+                        <button class="hero-secondary-btn" onclick="ProgressDashboard.openNotebook()">
+                            <i class="ph-bold ph-notebook"></i> Review Mistakes
+                        </button>
+                    </div>
                 </div>
-                <div class="welcome-quick-actions">
-                    <button class="hero-primary-btn" onclick="document.getElementById('catalog-section').scrollIntoView({behavior:'smooth'})">
-                        <i class="ph-bold ph-play"></i> New Drill
-                    </button>
-                    <button class="hero-secondary-btn" onclick="ProgressDashboard.openNotebook()">
-                        <i class="ph-bold ph-notebook"></i> Review Mistakes
-                    </button>
+
+                <!-- Line Divider Between Bars -->
+                <div class="welcome-card-divider"></div>
+
+                <!-- Bottom Row: Today's Goal & Tasks -->
+                <div class="welcome-planner-row">
+                    <div class="hp-left">
+                        <div class="hp-icon-badge">
+                            <i class="ph-bold ph-calendar-check"></i>
+                        </div>
+                        <div class="hp-meta">
+                            <div class="hp-title-row">
+                                <h3>Today's Goal & Tasks</h3>
+                            </div>
+                            <div class="hp-progress-wrap">
+                                <div class="hp-progress-bar-track">
+                                    <div id="home-planner-bar-fill" class="hp-progress-bar-fill" style="width: 0%;"></div>
+                                </div>
+                                <div class="hp-progress-numbers">
+                                    <span id="home-planner-ratio">0/0 Tasks</span>
+                                    <span id="home-planner-pct" class="hp-pct-bold">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hp-right">
+                        <div class="hp-streak-box">
+                            <span class="hp-streak-val text-orange" id="home-planner-streak-count">0 Days</span>
+                            <span class="hp-streak-lbl"><i class="ph-bold ph-fire"></i> Goal Streak</span>
+                        </div>
+                        <div class="hp-streak-box">
+                            <span class="hp-streak-val text-green" id="home-planner-achieved-count">0 Days</span>
+                            <span class="hp-streak-lbl"><i class="ph-bold ph-trophy"></i> 90%+ Met</span>
+                        </div>
+                        <button class="hp-open-btn" onclick="DailyPlanner.open();">
+                            Planner
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -152,7 +193,7 @@
                             </svg>
                             <div class="prep-ring-label">
                                 <span id="overview-acc-ring">0%</span>
-                                <small>ACCURACY</small>
+                                <small>Acc.</small>
                             </div>
                         </div>
                         <div class="prep-info">
@@ -238,65 +279,44 @@
                 <div class="overview-card card-stats-summary">
                     <div class="overview-card-head">
                         <span class="card-head-title">Live Scoreboard</span>
-                        <span class="live-indicator"><i class="ph-fill ph-circle"></i> SQLite Synced</span>
+                        <span class="live-indicator"><span class="live-pulse-dot"></span> Live Synced</span>
                     </div>
                     <div class="scoreboard-modern-grid" id="home-scoreboard">
-                        <div class="sb-stat-box">
-                            <span class="sb-val" id="home-stat-tests">0</span>
+                        <div class="sb-stat-box stat-blue">
+                            <div class="sb-stat-top">
+                                <span class="sb-val" id="home-stat-tests">0</span>
+                                <div class="sb-icon-wrap"><i class="ph-bold ph-exam"></i></div>
+                            </div>
                             <span class="sb-label">Tests Logged</span>
                         </div>
-                        <div class="sb-stat-box">
-                            <span class="sb-val text-blue" id="home-stat-accuracy">--</span>
+                        <div class="sb-stat-box stat-cyan">
+                            <div class="sb-stat-top">
+                                <span class="sb-val text-cyan" id="home-stat-accuracy">--</span>
+                                <div class="sb-icon-wrap"><i class="ph-bold ph-target"></i></div>
+                            </div>
                             <span class="sb-label">Avg Accuracy</span>
                         </div>
-                        <div class="sb-stat-box is-highlight">
-                            <span class="sb-val text-orange" id="home-stat-streak">0</span>
-                            <span class="sb-label">🔥 Best Streak</span>
+                        <div class="sb-stat-box stat-orange is-highlight">
+                            <div class="sb-stat-top">
+                                <span class="sb-val text-orange" id="home-stat-streak">0</span>
+                                <div class="sb-icon-wrap"><i class="ph-fill ph-fire"></i></div>
+                            </div>
+                            <span class="sb-label">Best Streak</span>
                         </div>
-                        <div class="sb-stat-box">
-                            <span class="sb-val text-purple" id="home-stat-mistakes">0</span>
+                        <div class="sb-stat-box stat-purple">
+                            <div class="sb-stat-top">
+                                <span class="sb-val text-purple" id="home-stat-mistakes">0</span>
+                                <div class="sb-icon-wrap"><i class="ph-bold ph-bookmark-simple"></i></div>
+                            </div>
                             <span class="sb-label">Mistakes to Fix</span>
                         </div>
                     </div>
-                    <button class="card-action-btn secondary" onclick="ProgressDashboard.open()">
-                        <i class="ph-bold ph-chart-line-up"></i> View Full Analytics
-                    </button>
-                </div>
-            </div>
-
-            <!-- Daily Study Goal & Planner Widget -->
-            <div class="home-planner-widget" onclick="DailyPlanner.open()">
-                <div class="hp-left">
-                    <div class="hp-icon-badge">
-                        <i class="ph-bold ph-calendar-check"></i>
-                    </div>
-                    <div class="hp-meta">
-                        <div class="hp-title-row">
-                            <h3>Today's Study Goal & Tasks</h3>
-                            <span class="hp-status-tag" id="home-planner-status-text">Plan today's tasks now</span>
-                        </div>
-                        <div class="hp-progress-wrap">
-                            <div class="hp-progress-bar-track">
-                                <div id="home-planner-bar-fill" class="hp-progress-bar-fill" style="width: 0%;"></div>
-                            </div>
-                            <div class="hp-progress-numbers">
-                                <span id="home-planner-ratio">0/0 Tasks</span>
-                                <span id="home-planner-pct" class="hp-pct-bold">0%</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="hp-right">
-                    <div class="hp-streak-box">
-                        <span class="hp-streak-val text-orange" id="home-planner-streak-count">0 Days</span>
-                        <span class="hp-streak-lbl"><i class="ph-bold ph-fire"></i> Goal Streak</span>
-                    </div>
-                    <div class="hp-streak-box">
-                        <span class="hp-streak-val text-green" id="home-planner-achieved-count">0 Days</span>
-                        <span class="hp-streak-lbl"><i class="ph-bold ph-trophy"></i> 90%+ Met</span>
-                    </div>
-                    <button class="hp-open-btn" onclick="event.stopPropagation(); DailyPlanner.open();">
-                        Open Planner <i class="ph-bold ph-arrow-right"></i>
+                    <button class="card-action-btn scoreboard-action-btn" onclick="ProgressDashboard.open()">
+                        <span class="sb-btn-left">
+                            <i class="ph-bold ph-chart-line-up"></i>
+                            <span>View Full Analytics</span>
+                        </span>
+                        <i class="ph-bold ph-arrow-right sb-btn-arrow"></i>
                     </button>
                 </div>
             </div>
@@ -809,11 +829,16 @@
                     <input type="number" id="math-questions" value="20" min="1" class="modern-input">
                 </div>
                 <div class="col">
-                    <label for="math-timer">Timer Mode</label>
+                    <label for="math-timer"><i class="ph-bold ph-timer"></i> Timer Mode</label>
                     <div class="difficulty-modes" id="math-timer-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn" data-val="countdown_15">15 Min</button>
                         <button type="button" class="mode-btn active" data-val="countdown_20">20 Min</button>
+                        <button type="button" class="mode-btn" data-val="countdown_custom" id="math-custom-btn">Custom</button>
                         <button type="button" class="mode-btn" data-val="stopwatch">Stopwatch</button>
+                    </div>
+                    <div id="math-custom-time-row" style="display:none; margin-top: 0.6rem; align-items: center; gap: 0.5rem;">
+                        <input type="number" id="math-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 85px; text-align:center;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">minutes</span>
                     </div>
                 </div>
             </div>
@@ -878,13 +903,15 @@
                 <input type="file" id="pdf-file" accept="application/pdf">
             </div>
 
-            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="col" style="flex: 1.3;">
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.25rem;">
+                <div class="col" style="flex: 1;">
                     <label><i class="ph-bold ph-books"></i> Subject</label>
-                    <div class="difficulty-modes" id="pdf-subject-group" style="margin-bottom: 0.75rem;">
+                    <div class="difficulty-modes" id="pdf-subject-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn active" data-subject="Maths"><i class="ph-bold ph-calculator"></i> Maths</button>
                         <button type="button" class="mode-btn" data-subject="Reasoning"><i class="ph-bold ph-brain"></i> Reasoning</button>
                     </div>
+                </div>
+                <div class="col" style="flex: 1.5;">
                     <label for="pdf-topic-input"><i class="ph-bold ph-tag"></i> Topic Name</label>
                     <input type="text" id="pdf-topic-input" list="pdf-topic-suggestions" class="modern-input" placeholder="e.g. Percentage, Calendar, Series..." style="width: 100%;">
                     <datalist id="pdf-topic-suggestions">
@@ -908,24 +935,27 @@
                         <option value="Analogy">
                     </datalist>
                 </div>
-                <div class="col" style="flex: 1;">
-                    <label>Exam Duration</label>
+            </div>
+
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="col" style="flex: 1.5;">
+                    <label><i class="ph-bold ph-clock"></i> Exam Duration</label>
                     <div class="difficulty-modes" id="pdf-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn active" data-val="15">15 Min</button>
                         <button type="button" class="mode-btn" data-val="20">20 Min</button>
                         <button type="button" class="mode-btn" data-val="30">30 Min</button>
                         <button type="button" class="mode-btn" data-val="custom" id="pdf-custom-btn">Custom</button>
                     </div>
-                    <div id="pdf-custom-time-row" style="display:none; margin-top: 0.6rem; display: none; align-items: center; gap: 0.5rem;">
-                        <input type="number" id="pdf-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 80px; text-align:center;">
-                        <span style="color: var(--text-secondary); font-size: 0.9rem;">minutes</span>
+                    <div id="pdf-custom-time-row" style="display:none; margin-top: 0.6rem; align-items: center; gap: 0.5rem;">
+                        <input type="number" id="pdf-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 85px; text-align:center;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">minutes</span>
                     </div>
                 </div>
                 
                 <div class="col" style="flex: 1;">
-                    <label>Test Rules</label>
-                    <div class="setting-chips-group">
-                        <label class="setting-chip-pill" style="width: 100%;">
+                    <label><i class="ph-bold ph-shield-check"></i> Test Rules</label>
+                    <div class="setting-chips-group" style="margin-bottom: 0;">
+                        <label class="setting-chip-pill" style="width: 100%; margin-bottom: 0;">
                             <input type="checkbox" id="pdf-negative" checked style="display: none;">
                             <span class="chip-inner">
                                 <i class="ph-bold ph-minus-circle"></i> Negative (-0.25)
@@ -975,15 +1005,17 @@
                 <input type="file" id="doc-shuffle-file" accept="application/pdf,.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
             </div>
 
-            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
-                <div class="col" style="flex: 1.3;">
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.25rem;">
+                <div class="col" style="flex: 1;">
                     <label><i class="ph-bold ph-books"></i> Subject</label>
-                    <div class="difficulty-modes" id="doc-shuffle-subject-group" style="margin-bottom: 0.75rem;">
+                    <div class="difficulty-modes" id="doc-shuffle-subject-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn active" data-subject="Maths"><i class="ph-bold ph-calculator"></i> Maths</button>
                         <button type="button" class="mode-btn" data-subject="Reasoning"><i class="ph-bold ph-brain"></i> Reasoning</button>
                     </div>
+                </div>
+                <div class="col" style="flex: 1.5;">
                     <label for="doc-shuffle-topic-input"><i class="ph-bold ph-tag"></i> Topic Name</label>
-                    <input type="text" id="doc-shuffle-topic-input" list="doc-shuffle-topic-suggestions" class="modern-input" placeholder="e.g. Calendar, Percentage, Coding-Decoding..." style="width: 100%;">
+                    <input type="text" id="doc-shuffle-topic-input" list="doc-shuffle-topic-suggestions" class="modern-input" placeholder="e.g. Percentage, Time & Work, Calendar..." style="width: 100%;">
                     <datalist id="doc-shuffle-topic-suggestions">
                         <option value="Percentage">
                         <option value="Profit & Loss">
@@ -1005,24 +1037,26 @@
                         <option value="Analogy">
                     </datalist>
                 </div>
-                <div class="col" style="flex: 1;">
-                    <label>Exam Duration</label>
+            </div>
+
+            <div class="form-group row" style="align-items: flex-start; gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="col" style="flex: 1.5;">
+                    <label><i class="ph-bold ph-clock"></i> Exam Duration</label>
                     <div class="difficulty-modes" id="doc-shuffle-duration-group" style="margin-bottom: 0;">
                         <button type="button" class="mode-btn" data-val="15">15 Min</button>
                         <button type="button" class="mode-btn active" data-val="20">20 Min</button>
                         <button type="button" class="mode-btn" data-val="30">30 Min</button>
-                        <button type="button" class="mode-btn" data-val="45">45 Min</button>
                         <button type="button" class="mode-btn" data-val="custom" id="doc-custom-btn">Custom</button>
                     </div>
                     <div id="doc-custom-time-row" style="display:none; margin-top: 0.6rem; align-items: center; gap: 0.5rem;">
-                        <input type="number" id="doc-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 80px; text-align:center;">
-                        <span style="color: var(--text-secondary); font-size: 0.9rem;">minutes</span>
+                        <input type="number" id="doc-custom-minutes" min="1" max="180" value="25" class="modern-input" style="width: 85px; text-align:center;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem; font-weight: 500;">minutes</span>
                     </div>
                 </div>
-                <div class="col" style="flex: 0.9;">
-                    <label>Test Rules</label>
-                    <div class="setting-chips-group">
-                        <label class="setting-chip-pill" style="width: 100%;">
+                <div class="col" style="flex: 1;">
+                    <label><i class="ph-bold ph-shield-check"></i> Test Rules</label>
+                    <div class="setting-chips-group" style="margin-bottom: 0;">
+                        <label class="setting-chip-pill" style="width: 100%; margin-bottom: 0;">
                             <input type="checkbox" id="doc-shuffle-negative" style="display: none;">
                             <span class="chip-inner">
                                 <i class="ph-bold ph-minus-circle"></i> Negative (-0.25)
@@ -1051,7 +1085,7 @@
                 <button class="secondary-btn" onclick="QuizEngine.showScreen(document.getElementById('home-screen'))">
                     <i class="ph-bold ph-arrow-left"></i> Back
                 </button>
-                <button id="doc-shuffle-start-btn" class="primary-btn" disabled style="background: linear-gradient(135deg, #0ea5e9, #0369a1); box-shadow: 0 4px 14px rgba(14,165,233,0.35);">
+                <button id="doc-shuffle-start-btn" class="primary-btn doc-shuffle-start-btn" disabled>
                     <i class="ph-bold ph-shuffle"></i> Extract & Start Drill
                 </button>
             </div>
@@ -1757,7 +1791,14 @@
             const streak = await ProgressStore.getBestStreak();
             if (streakEl) streakEl.textContent = streak;
 
-            const mistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: true });
+            const rawMistakes = await ProgressStore.getMistakes({ topic: 'all', activeOnly: true });
+            const mistakes = (typeof ProgressDashboard !== 'undefined' && ProgressDashboard.isMistakeEligible)
+                ? rawMistakes.filter(ProgressDashboard.isMistakeEligible)
+                : rawMistakes.filter(m => {
+                    const t = (m.topic || '').toLowerCase();
+                    const q = (m.question || '').toLowerCase();
+                    return !t.includes('calculation') && !t.includes('speed') && !q.includes('copy-');
+                });
             if (mistakesEl) mistakesEl.textContent = mistakes.length;
 
             const prepMasteryEl = document.getElementById('prep-mastery-status');
@@ -1787,7 +1828,130 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', refreshHomeStats);
+        // ── Single Page App Browser History & Routing (Back / Forward navigation) ──
+        const AppRouter = {
+            navigateToHash(hash, pushState = true) {
+                const cleanHash = (hash || '').replace(/^#/, '').toLowerCase().trim();
+
+                // If test is running and user clicks browser Back
+                const quizScreen = document.getElementById('quiz-screen');
+                if (quizScreen && quizScreen.classList.contains('active') && cleanHash !== 'quiz' && QuizEngine.state?.timerInterval) {
+                    const confirmLeave = confirm('A test is currently in progress. Do you want to quit the test and go back?');
+                    if (!confirmLeave) {
+                        history.pushState({ screenId: 'quiz-screen' }, '', '#quiz');
+                        return;
+                    }
+                    clearInterval(QuizEngine.state.timerInterval);
+                }
+
+                switch (cleanHash) {
+                    case 'syllabus':
+                        if (typeof SyllabusManager !== 'undefined') SyllabusManager.open(pushState);
+                        break;
+                    case 'planner':
+                    case 'daily-planner':
+                        if (typeof DailyPlanner !== 'undefined') DailyPlanner.open(pushState);
+                        break;
+                    case 'notebook':
+                    case 'mistakes':
+                        if (typeof ProgressDashboard !== 'undefined') ProgressDashboard.openNotebook(pushState);
+                        break;
+                    case 'analytics':
+                    case 'stats':
+                    case 'dashboard':
+                        if (typeof ProgressDashboard !== 'undefined') ProgressDashboard.open(pushState);
+                        break;
+                    case 'calc-speed':
+                    case 'calc-analytics':
+                        if (typeof CalcAnalytics !== 'undefined') CalcAnalytics.open(pushState);
+                        break;
+                    case 'pdf-mock':
+                    case 'pdf':
+                        QuizEngine.showScreen(document.getElementById('pdf-screen'), pushState);
+                        break;
+                    case 'doc-shuffle':
+                        QuizEngine.showScreen(document.getElementById('doc-shuffle-screen'), pushState);
+                        break;
+                    case 'setup':
+                        QuizEngine.showScreen(document.getElementById('setup-screen'), pushState);
+                        break;
+                    case 'catalog':
+                        QuizEngine.showScreen(document.getElementById('home-screen'), pushState);
+                        if (typeof ProgressDashboard !== 'undefined') ProgressDashboard.updateNavActive('catalog');
+                        setTimeout(() => {
+                            document.getElementById('catalog-section')?.scrollIntoView({ behavior: 'smooth' });
+                        }, 50);
+                        break;
+                    case 'home':
+                    case '':
+                    default:
+                        QuizEngine.showScreen(document.getElementById('home-screen'), pushState);
+                        if (typeof ProgressDashboard !== 'undefined') ProgressDashboard.updateNavActive('home');
+                        break;
+                }
+            },
+
+            init() {
+                // Listen to native browser Back and Forward navigation buttons
+                window.addEventListener('popstate', (e) => {
+                    const targetHash = window.location.hash || '#home';
+                    AppRouter.navigateToHash(targetHash, false);
+                });
+
+                // On initial page load, respect the URL hash if present
+                const initialHash = window.location.hash;
+                if (initialHash && initialHash !== '#home' && initialHash !== '#') {
+                    AppRouter.navigateToHash(initialHash, false);
+                } else {
+                    if (typeof history !== 'undefined' && history.replaceState) {
+                        history.replaceState({ screenId: 'home-screen' }, '', '#home');
+                    }
+                }
+            }
+        };
+
+        window.AppRouter = AppRouter;
+
+        function playWelcomeTypewriter() {
+            const headingEl = document.getElementById('welcome-heading');
+            if (!headingEl) return;
+            const fullText = "Welcome Back !";
+            const textSpan = headingEl.querySelector('.typewriter-text') || headingEl;
+            const cursorSpan = headingEl.querySelector('.typewriter-cursor');
+            
+            if (headingEl._typeTimer) {
+                clearInterval(headingEl._typeTimer);
+                headingEl._typeTimer = null;
+            }
+            
+            textSpan.textContent = '';
+            if (cursorSpan) {
+                cursorSpan.classList.add('typing');
+            }
+            
+            let i = 0;
+            const speed = 40;
+            
+            headingEl._typeTimer = setInterval(() => {
+                if (i < fullText.length) {
+                    textSpan.textContent += fullText.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(headingEl._typeTimer);
+                    headingEl._typeTimer = null;
+                    setTimeout(() => {
+                        if (cursorSpan) cursorSpan.classList.remove('typing');
+                    }, 1200);
+                }
+            }, speed);
+        }
+        window.playWelcomeTypewriter = playWelcomeTypewriter;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            refreshHomeStats();
+            playWelcomeTypewriter();
+            AppRouter.init();
+        });
     </script>
 </body>
 </html>

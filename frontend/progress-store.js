@@ -1,5 +1,6 @@
 const ProgressStore = (() => {
-    const API_BASE = 'https://mock-test-backend-crqm.onrender.com/api/progress';
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const API_BASE = isLocal ? 'http://localhost:8000/api/progress' : (window.BACKEND_URL ? `${window.BACKEND_URL}/api/progress` : 'https://mock-test-backend-crqm.onrender.com/api/progress');
 
     // In-memory cache for instant zero-lag page navigation
     const cache = {
@@ -51,6 +52,23 @@ const ProgressStore = (() => {
         }
     }
 
+    function clearLocalTests() {
+        try {
+            localStorage.removeItem(LOCAL_KEY);
+        } catch {}
+    }
+
+    function removeLocalTest(id) {
+        try {
+            const list = getLocalTests().filter(x => x && x.id !== id);
+            if (list.length === 0) {
+                clearLocalTests();
+            } else {
+                localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
+            }
+        } catch {}
+    }
+
     function saveLocalTest(test) {
         try {
             const list = getLocalTests();
@@ -61,7 +79,12 @@ const ProgressStore = (() => {
                 ...test,
                 total
             };
-            list.unshift(enriched);
+            const existingIdx = list.findIndex(x => x.id === enriched.id);
+            if (existingIdx >= 0) {
+                list[existingIdx] = enriched;
+            } else {
+                list.unshift(enriched);
+            }
             localStorage.setItem(LOCAL_KEY, JSON.stringify(list));
             return enriched;
         } catch (e) {
@@ -70,14 +93,37 @@ const ProgressStore = (() => {
         }
     }
 
+    async function syncOfflineTestsToRemote() {
+        const localTests = getLocalTests();
+        if (!localTests || localTests.length === 0) return;
+
+        // Push any test marked as pending offline
+        const pending = localTests.filter(t => t && t._isOfflinePending);
+        for (const test of pending) {
+            try {
+                const cleanTest = { ...test };
+                delete cleanTest._isOfflinePending;
+                await fetch(`${API_BASE}/tests`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(cleanTest)
+                });
+            } catch (e) {
+                console.warn('[ProgressStore] Failed to sync pending offline test', e);
+            }
+        }
+        // Once online and synced, purge local storage so DB remains single source of truth
+        clearLocalTests();
+    }
+
     async function saveTest(testData) {
         invalidateCache();
-        // 1. Immediately store in localStorage so data is 100% safe locally
         const total = computeTestTotal(testData);
-        const enrichedData = { ...testData, total };
-        const localSaved = saveLocalTest(enrichedData);
+        const testId = testData.id || `test_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
+        const completedAt = testData.completedAt || new Date().toISOString();
+        const enrichedData = { ...testData, id: testId, completedAt, total };
 
-        // 2. Sync to backend database
+        // 1. Attempt direct save to backend database
         try {
             const res = await fetch(`${API_BASE}/tests`, {
                 method: 'POST',
@@ -86,54 +132,60 @@ const ProgressStore = (() => {
             });
             if (!res.ok) throw new Error('Failed to save test to remote');
             const data = await res.json();
-            return { ...data, total: computeTestTotal(data) || total };
+            const canonical = { ...data, total: computeTestTotal(data) || total };
+            // Ensure no lingering copy in localStorage
+            removeLocalTest(testId);
+            return canonical;
         } catch (e) {
-            console.warn('[ProgressStore] Remote save failed, using local backup', e);
-            return localSaved;
+            console.warn('[ProgressStore] Remote save failed, queueing offline in localStorage', e);
+            enrichedData._isOfflinePending = true;
+            return saveLocalTest(enrichedData);
         }
     }
 
     async function getTests(forceRefresh = false) {
         if (!forceRefresh && cache.tests) return cache.tests;
-        let remoteTests = [];
+        let remoteTests = null;
+        let remoteSuccess = false;
         try {
             const res = await fetch(`${API_BASE}/tests`);
             if (res.ok) {
                 remoteTests = await res.json();
+                remoteSuccess = true;
             }
         } catch (e) {
-            console.warn('[ProgressStore] Remote fetch failed, falling back to local storage', e);
+            console.warn('[ProgressStore] Remote fetch failed, using offline fallback', e);
         }
 
-        // Merge remote tests + any local backup tests not present remotely
+        // DATABASE IS PRIMARY & SOLE SOURCE OF TRUTH WHEN ONLINE
+        if (remoteSuccess && Array.isArray(remoteTests)) {
+            // Push any pending offline tests and wipe localStorage clean
+            await syncOfflineTestsToRemote();
+
+            const canonical = remoteTests.map(t => ({
+                ...t,
+                correctCount: Number(t.correctCount) || 0,
+                wrongCount: Number(t.wrongCount) || 0,
+                skippedCount: Number(t.skippedCount) || 0,
+                total: computeTestTotal(t)
+            }));
+            canonical.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+            cache.tests = canonical;
+            return canonical;
+        }
+
+        // OFFLINE FALLBACK: Only used when server is completely unreachable
         const localTests = getLocalTests();
-        const mergedMap = new Map();
-
-        // Add local first
-        localTests.forEach(t => { 
-            if (t && t.id) {
-                mergedMap.set(t.id, { ...t, total: computeTestTotal(t) }); 
-            }
-        });
-        // Add remote (overwrites matching ids with canonical remote version)
-        remoteTests.forEach(t => { 
-            if (t && t.id) {
-                mergedMap.set(t.id, { ...t, total: computeTestTotal(t) }); 
-            }
-        });
-
-        const merged = Array.from(mergedMap.values()).map(t => ({
+        const fallback = localTests.map(t => ({
             ...t,
             correctCount: Number(t.correctCount) || 0,
             wrongCount: Number(t.wrongCount) || 0,
             skippedCount: Number(t.skippedCount) || 0,
             total: computeTestTotal(t)
         }));
-        // Sort descending by completedAt
-        merged.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
-
-        cache.tests = merged;
-        return merged;
+        fallback.sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0));
+        cache.tests = fallback;
+        return fallback;
     }
 
     const MISTAKE_TAGS_KEY = 'academix_mistake_tags';
@@ -230,5 +282,44 @@ const ProgressStore = (() => {
         }
     }
 
-    return { saveTest, getTests, getMistakes, getTopics, getBestStreak, updateBestStreak, invalidateCache, getMistakeTags, setMistakeTag };
+    async function getSyllabus() {
+        try {
+            const res = await fetch(`${API_BASE}/syllabus`);
+            if (!res.ok) throw new Error('Failed to fetch remote syllabus');
+            const json = await res.json();
+            return json.data || {};
+        } catch (e) {
+            console.warn('[ProgressStore] Could not fetch remote syllabus', e);
+            return null;
+        }
+    }
+
+    async function saveSyllabus(syllabusData) {
+        try {
+            const res = await fetch(`${API_BASE}/syllabus`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: syllabusData })
+            });
+            if (!res.ok) throw new Error('Failed to save remote syllabus');
+            return await res.json();
+        } catch (e) {
+            console.warn('[ProgressStore] Could not save remote syllabus', e);
+            return null;
+        }
+    }
+
+    return { 
+        saveTest, 
+        getTests, 
+        getMistakes, 
+        getTopics, 
+        getBestStreak, 
+        updateBestStreak, 
+        invalidateCache, 
+        getMistakeTags, 
+        setMistakeTag,
+        getSyllabus,
+        saveSyllabus
+    };
 })();

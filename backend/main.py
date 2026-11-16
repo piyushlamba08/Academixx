@@ -16,8 +16,9 @@ from file_extractor import extract_text_from_file
 from graph import run_mock_pipeline
 from schemas import (
     PracticeRequest, PracticeResponse,
-    TestIn, TestOut, TestQuestionOut, MistakeOut, TopicsOut, StreakOut, StreakIn,
+    TestIn, TestOut, TestQuestionOut, MistakeOut, StreakOut, StreakIn,
     ShortcutRequest, ShortcutResponse, TranslateRequest, TranslateResponse,
+    SyllabusIn, SyllabusOut,
 )
 import practice_generator
 import models as db_models
@@ -226,11 +227,65 @@ async def practice_tables(req: PracticeRequest):
 
 # ── Progress Endpoints ──
 
+def _serialize_test(t: db_models.Test) -> TestOut:
+    questions_out = [
+        TestQuestionOut(
+            number=tq.number,
+            question=tq.question,
+            options=json.loads(tq.options) if isinstance(tq.options, str) else (tq.options or []),
+            correctAnswer=tq.correct_answer,
+            userAnswer=tq.user_answer,
+            result=tq.result,
+            timeSpentSeconds=tq.time_spent_seconds
+        ) for tq in t.questions
+    ]
+    return TestOut(
+        id=t.id,
+        completedAt=t.completed_at,
+        topic=t.topic,
+        sourceName=t.source_name,
+        durationSeconds=t.duration_seconds,
+        score=t.score,
+        correctCount=t.correct_count,
+        wrongCount=t.wrong_count,
+        skippedCount=t.skipped_count,
+        total=t.total,
+        questions=questions_out
+    )
+
 @app.post("/api/progress/tests", response_model=TestOut)
 def save_test(test_in: TestIn, db: Session = Depends(get_db)):
-    completed_at = datetime.now(timezone.utc).isoformat()
-    test_id = str(uuid.uuid4())
+    completed_at = test_in.completedAt or datetime.now(timezone.utc).isoformat()
+    test_id = test_in.id or str(uuid.uuid4())
     
+    # 1. Deduplication guard by ID
+    existing = db.query(db_models.Test).filter(db_models.Test.id == test_id).first()
+    if existing:
+        return _serialize_test(existing)
+
+    # 2. Deduplication guard by exact matching parameters within 15 seconds
+    recent_dup = (
+        db.query(db_models.Test)
+        .filter(
+            db_models.Test.topic == test_in.topic,
+            db_models.Test.correct_count == test_in.correctCount,
+            db_models.Test.wrong_count == test_in.wrongCount,
+            db_models.Test.skipped_count == test_in.skippedCount,
+            db_models.Test.total == len(test_in.questions)
+        )
+        .order_by(db_models.Test.completed_at.desc())
+        .first()
+    )
+    if recent_dup:
+        try:
+            t1 = datetime.fromisoformat(completed_at.replace("Z", "+00:00"))
+            t0 = datetime.fromisoformat(recent_dup.completed_at.replace("Z", "+00:00"))
+            if abs((t1 - t0).total_seconds()) < 15:
+                print(f"[API] ⚠️ Duplicate test rejected (matched recent {recent_dup.id})")
+                return _serialize_test(recent_dup)
+        except Exception:
+            pass
+
     test_db = db_models.Test(
         id=test_id,
         completed_at=completed_at,
@@ -259,104 +314,61 @@ def save_test(test_in: TestIn, db: Session = Depends(get_db)):
         )
         db.add(tq)
         
-        # Mistake Logic
-        key = f"{q.question}|{q.correctAnswer}".lower()
-        existing = db.query(db_models.Mistake).filter(db_models.Mistake.key == key).first()
+        # Mistake Logic - Calculation & Big Calculation drills should NOT be recorded in Mistake Notebook
+        topic_lower = (test_in.topic or "").lower()
+        is_calc_drill = any(k in topic_lower for k in [
+            "calculation", "calculations", "addition", "subtraction", 
+            "multiplication", "division", "square", "cube", "tables", "speed math"
+        ]) or any(k in (q.question or "").lower() for k in ["copy-math-container", "copy-fraction", "copy-num", "copy-den", "copy-whole-num"])
         
-        if result in ("wrong", "skipped"):
-            if existing:
-                existing.last_attempted_at = completed_at
-                existing.times_seen += 1
-                if result == "wrong":
-                    existing.times_wrong += 1
-                elif result == "skipped":
-                    existing.times_skipped += 1
-                existing.last_result = result
-                existing.active = True
+        if not is_calc_drill:
+            key = f"{q.question}|{q.correctAnswer}".lower()
+            existing = db.query(db_models.Mistake).filter(db_models.Mistake.key == key).first()
+            
+            if result in ("wrong", "skipped"):
+                if existing:
+                    existing.last_attempted_at = completed_at
+                    existing.times_seen += 1
+                    if result == "wrong":
+                        existing.times_wrong += 1
+                    elif result == "skipped":
+                        existing.times_skipped += 1
+                    existing.last_result = result
+                    existing.active = True
+                else:
+                    new_mistake = db_models.Mistake(
+                        key=key,
+                        question=q.question,
+                        options=json.dumps(q.options) if q.options else "[]",
+                        correct_answer=q.correctAnswer,
+                        topic=test_in.topic,
+                        first_mistake_at=completed_at,
+                        last_attempted_at=completed_at,
+                        times_seen=1,
+                        times_wrong=1 if result == "wrong" else 0,
+                        times_skipped=1 if result == "skipped" else 0,
+                        times_correct=0,
+                        last_result=result,
+                        active=True
+                    )
+                    db.add(new_mistake)
             else:
-                new_mistake = db_models.Mistake(
-                    key=key,
-                    question=q.question,
-                    options=json.dumps(q.options) if q.options else "[]",
-                    correct_answer=q.correctAnswer,
-                    topic=test_in.topic,
-                    first_mistake_at=completed_at,
-                    last_attempted_at=completed_at,
-                    times_seen=1,
-                    times_wrong=1 if result == "wrong" else 0,
-                    times_skipped=1 if result == "skipped" else 0,
-                    times_correct=0,
-                    last_result=result,
-                    active=True
-                )
-                db.add(new_mistake)
-        else:
-            if existing:
-                existing.last_attempted_at = completed_at
-                existing.times_seen += 1
-                existing.times_correct += 1
-                existing.last_result = "correct"
-                existing.active = False
+                if existing:
+                    existing.last_attempted_at = completed_at
+                    existing.times_seen += 1
+                    existing.times_correct += 1
+                    existing.last_result = "correct"
+                    existing.active = False
                 
     db.commit()
     db.refresh(test_db)
-    
-    questions_out = [
-        TestQuestionOut(
-            number=tq.number,
-            question=tq.question,
-            options=json.loads(tq.options),
-            correctAnswer=tq.correct_answer,
-            userAnswer=tq.user_answer,
-            result=tq.result,
-            timeSpentSeconds=tq.time_spent_seconds
-        ) for tq in test_db.questions
-    ]
-    return TestOut(
-        id=test_db.id,
-        completedAt=test_db.completed_at,
-        topic=test_db.topic,
-        sourceName=test_db.source_name,
-        durationSeconds=test_db.duration_seconds,
-        score=test_db.score,
-        correctCount=test_db.correct_count,
-        wrongCount=test_db.wrong_count,
-        skippedCount=test_db.skipped_count,
-        total=test_db.total,
-        questions=questions_out
-    )
+    return _serialize_test(test_db)
 
 
 @app.get("/api/progress/tests", response_model=List[TestOut])
 def get_tests(db: Session = Depends(get_db)):
     tests = db.query(db_models.Test).order_by(db_models.Test.completed_at.desc()).all()
-    res = []
-    for t in tests:
-        questions_out = [
-            TestQuestionOut(
-                number=tq.number,
-                question=tq.question,
-                options=json.loads(tq.options),
-                correctAnswer=tq.correct_answer,
-                userAnswer=tq.user_answer,
-                result=tq.result,
-                timeSpentSeconds=tq.time_spent_seconds
-            ) for tq in t.questions
-        ]
-        res.append(TestOut(
-            id=t.id,
-            completedAt=t.completed_at,
-            topic=t.topic,
-            sourceName=t.source_name,
-            durationSeconds=t.duration_seconds,
-            score=t.score,
-            correctCount=t.correct_count,
-            wrongCount=t.wrong_count,
-            skippedCount=t.skipped_count,
-            total=t.total,
-            questions=questions_out
-        ))
-    return res
+    return [_serialize_test(t) for t in tests]
 
 
 @app.get("/api/progress/mistakes", response_model=List[MistakeOut])
@@ -368,6 +380,16 @@ def get_mistakes(topic: str = "all", activeOnly: str = "true", db: Session = Dep
         query = query.filter(db_models.Mistake.active == True)
     
     mistakes = query.order_by(db_models.Mistake.last_attempted_at.desc()).all()
+    clean_mistakes = []
+    for m in mistakes:
+        top = (m.topic or "").lower()
+        q_text = (m.question or "").lower()
+        if any(k in top for k in ["calculation", "calculations", "addition", "subtraction", "multiplication", "division", "square", "cube", "tables", "speed math"]):
+            continue
+        if any(k in q_text for k in ["copy-math-container", "copy-fraction", "copy-num", "copy-den", "copy-whole-num"]):
+            continue
+        clean_mistakes.append(m)
+
     return [MistakeOut(
         key=m.key,
         question=m.question,
@@ -380,7 +402,7 @@ def get_mistakes(topic: str = "all", activeOnly: str = "true", db: Session = Dep
         timesCorrect=m.times_correct,
         lastResult=m.last_result,
         active=m.active
-    ) for m in mistakes]
+    ) for m in clean_mistakes]
 
 
 @app.get("/api/progress/topics", response_model=List[str])
@@ -410,18 +432,61 @@ def update_streak(streak_in: StreakIn, db: Session = Depends(get_db)):
     return StreakOut(bestStreak=streak.best_streak)
 
 
+# ── Syllabus Progress Endpoints (Cross-Device Cloud Sync) ──
+
+@app.get("/api/progress/syllabus", response_model=SyllabusOut)
+def get_syllabus(db: Session = Depends(get_db)):
+    record = db.query(db_models.SyllabusRecord).filter(db_models.SyllabusRecord.id == "default").first()
+    if not record or not record.data:
+        return SyllabusOut(data={}, updatedAt=None)
+    try:
+        parsed = json.loads(record.data)
+    except Exception:
+        parsed = {}
+    return SyllabusOut(data=parsed, updatedAt=record.updated_at)
+
+
+@app.post("/api/progress/syllabus", response_model=SyllabusOut)
+def save_syllabus(syllabus_in: SyllabusIn, db: Session = Depends(get_db)):
+    record = db.query(db_models.SyllabusRecord).filter(db_models.SyllabusRecord.id == "default").first()
+    now_str = datetime.now(timezone.utc).isoformat()
+    json_data = json.dumps(syllabus_in.data)
+    if not record:
+        record = db_models.SyllabusRecord(id="default", data=json_data, updated_at=now_str)
+        db.add(record)
+    else:
+        record.data = json_data
+        record.updated_at = now_str
+    db.commit()
+    db.refresh(record)
+    return SyllabusOut(data=syllabus_in.data, updatedAt=record.updated_at)
+
+
 # ── AI Topper Shortcut Trick ──
+
+import re
+
+def clean_question_for_ai(text: str) -> str:
+    if not text:
+        return ""
+    # Simplify custom math fraction markup to plain a/b
+    t = re.sub(r'<span class="copy-num">([^<]+)</span>\s*<span class="copy-den">([^<]+)</span>', r'\1/\2', text)
+    t = re.sub(r'<span class="num">([^<]+)</span>\s*<span class="den">([^<]+)</span>', r'\1/\2', t)
+    # Strip any remaining HTML tags
+    t = re.sub(r'<[^>]+>', ' ', t)
+    return re.sub(r'\s+', ' ', t).strip()
 
 @app.post("/api/ai/shortcut-trick", response_model=ShortcutResponse)
 async def generate_shortcut_trick(req: ShortcutRequest):
     try:
         from llm_setup import get_generation_llm
         llm = get_generation_llm()
+        clean_q = clean_question_for_ai(req.question)
         
         prompt = f"""You are an elite competitive exam coach (All India Rank 1 trainer for Quant/Aptitude).
 Analyze this question and provide the fastest, smartest "10-Second Topper's Shortcut Trick" (e.g. Unit Digit, Digital Root, Vedic Math, Elimination, or Approximation).
 
-Question: {req.question}
+Question: {clean_q}
 Options: {', '.join(req.options) if req.options else 'N/A'}
 Correct Answer: {req.correct_answer}
 User's Attempt: {req.user_answer or 'Skipped/Wrong'}

@@ -6,7 +6,8 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    const BACKEND_URL = 'https://mock-test-backend-crqm.onrender.com';
+    const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const BACKEND_URL = isLocal ? 'http://localhost:8000' : (window.BACKEND_URL || 'https://mock-test-backend-crqm.onrender.com');
 
     const els = {
         uploadContainer:  document.getElementById('doc-shuffle-upload-container'),

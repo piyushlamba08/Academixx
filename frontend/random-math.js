@@ -82,6 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
+    // Custom timer toggle for standard drill setup screen
+    document.querySelectorAll('#math-timer-group button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const customRow = document.getElementById('math-custom-time-row');
+            if (customRow) {
+                if (btn.dataset.val === 'countdown_custom') {
+                    customRow.style.display = 'flex';
+                    document.getElementById('math-custom-minutes')?.focus();
+                } else {
+                    customRow.style.display = 'none';
+                }
+            }
+        });
+    });
+
     // Helper to generate a random number within digits range
     function getRandomNumber(digits, allowDecimals) {
         const min = Math.pow(10, digits - 1);
@@ -594,6 +609,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let durationMins = 0;
         if (timerSetting === 'countdown_15') durationMins = 15;
         if (timerSetting === 'countdown_20') durationMins = 20;
+        if (timerSetting === 'countdown_custom') {
+            const customVal = parseInt(document.getElementById('math-custom-minutes')?.value);
+            durationMins = (customVal > 0 && customVal <= 180) ? customVal : 20;
+        }
 
         QuizEngine.startQuiz(questions, durationMins, {
             topic: topicLabel,

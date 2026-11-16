@@ -277,8 +277,8 @@ const CalcAnalytics = (() => {
     }
 
     /* ── Public API ───────────────────────────────────────────────────────── */
-    async function open() {
-        QuizEngine.showScreen(document.getElementById('calc-analytics-screen'));
+    async function open(pushHistory = true) {
+        QuizEngine.showScreen(document.getElementById('calc-analytics-screen'), pushHistory);
         ProgressDashboard.updateNavActive('calc-analytics');
 
         const loadEl = document.getElementById('ca-loading');

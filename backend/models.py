@@ -67,3 +67,12 @@ class StreakRecord(Base):
 
     id = Column(Integer, primary_key=True)
     best_streak = Column(Integer, default=0)
+
+
+class SyllabusRecord(Base):
+    __tablename__ = "syllabus_progress"
+
+    id = Column(String, primary_key=True, default="default")
+    data = Column(Text, nullable=False, default="{}")
+    updated_at = Column(String, nullable=False)
+

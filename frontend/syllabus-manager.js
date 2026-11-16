@@ -8,6 +8,8 @@ const SyllabusManager = (() => {
     let currentFilter = 'all'; // 'all', 'pending', 'completed'
     let searchQuery = '';
 
+    let remoteSyncTimeout = null;
+
     // Load progress object from localStorage: { [subjectId]: { [topicKey]: { done: boolean, r1: boolean, r2: boolean, ... } } }
     function loadProgress() {
         try {
@@ -24,6 +26,62 @@ const SyllabusManager = (() => {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
         } catch (e) {
             console.error('Failed to save syllabus progress', e);
+        }
+
+        // Automatic cross-device cloud sync to SQL database
+        if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout);
+        remoteSyncTimeout = setTimeout(async () => {
+            if (typeof ProgressStore !== 'undefined' && ProgressStore.saveSyllabus) {
+                await ProgressStore.saveSyllabus(progress);
+            }
+        }, 500);
+    }
+
+    async function syncFromRemote() {
+        if (typeof ProgressStore === 'undefined' || !ProgressStore.getSyllabus) return;
+        try {
+            const remoteData = await ProgressStore.getSyllabus();
+            if (!remoteData || typeof remoteData !== 'object' || Object.keys(remoteData).length === 0) {
+                // If cloud database is empty, seed it with existing local progress
+                const local = loadProgress();
+                if (Object.keys(local).length > 0) {
+                    ProgressStore.saveSyllabus(local);
+                }
+                return;
+            }
+
+            // Union merge local and cloud database so no device loses progress
+            const local = loadProgress();
+            const merged = { ...remoteData };
+
+            Object.keys(local).forEach(subj => {
+                if (!merged[subj]) merged[subj] = {};
+                Object.keys(local[subj] || {}).forEach(k => {
+                    if (!merged[subj][k]) {
+                        merged[subj][k] = local[subj][k];
+                    } else {
+                        merged[subj][k] = {
+                            ...merged[subj][k],
+                            ...local[subj][k],
+                            done: !!(merged[subj][k].done || local[subj][k].done),
+                            r1: !!(merged[subj][k].r1 || local[subj][k].r1),
+                            r2: !!(merged[subj][k].r2 || local[subj][k].r2),
+                            r3: !!(merged[subj][k].r3 || local[subj][k].r3),
+                            r4: !!(merged[subj][k].r4 || local[subj][k].r4),
+                            r5: !!(merged[subj][k].r5 || local[subj][k].r5)
+                        };
+                    }
+                });
+            });
+
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+            // If local had data that wasn't in remote, save merged back to cloud database
+            if (JSON.stringify(merged) !== JSON.stringify(remoteData)) {
+                await ProgressStore.saveSyllabus(merged);
+            }
+            render();
+        } catch (e) {
+            console.warn('[SyllabusManager] Remote syllabus sync error', e);
         }
     }
 
@@ -472,15 +530,23 @@ const SyllabusManager = (() => {
         renderTopicsList();
     }
 
-    function open() {
-        QuizEngine.showScreen(document.getElementById('syllabus-screen'));
+    function open(pushHistory = true) {
+        QuizEngine.showScreen(document.getElementById('syllabus-screen'), pushHistory);
         ProgressDashboard.updateNavActive('syllabus');
         render();
+        syncFromRemote();
+    }
+
+    if (typeof document !== 'undefined') {
+        document.addEventListener('DOMContentLoaded', () => {
+            syncFromRemote();
+        });
     }
 
     return {
         open,
         render,
+        syncFromRemote,
         selectSubject,
         toggleTopicDone,
         toggleRound,

@@ -594,7 +594,6 @@ const DailyPlanner = (() => {
         const widgetPct = document.getElementById('home-planner-pct');
         const widgetStreak = document.getElementById('home-planner-streak-count');
         const widgetAchieved = document.getElementById('home-planner-achieved-count');
-        const widgetStatus = document.getElementById('home-planner-status-text');
 
         if (widgetRatio) widgetRatio.textContent = `${stats.done}/${stats.total} Tasks`;
         if (widgetPct) widgetPct.textContent = `${stats.pct}%`;
@@ -604,21 +603,11 @@ const DailyPlanner = (() => {
         }
         if (widgetStreak) widgetStreak.textContent = `${metrics.currentStreak} Days`;
         if (widgetAchieved) widgetAchieved.textContent = `${metrics.totalAchievedCount} Days`;
-
-        if (widgetStatus) {
-            if (stats.total === 0) {
-                widgetStatus.textContent = 'Plan today\'s tasks now';
-            } else if (stats.achieved) {
-                widgetStatus.textContent = `🎯 Target Achieved (${stats.pct}% ≥ ${metrics.targetPct}%)!`;
-            } else {
-                widgetStatus.textContent = `${metrics.targetPct}% target in progress`;
-            }
-        }
     }
 
     /* ── Navigation & Initialization ── */
-    function open() {
-        QuizEngine.showScreen(document.getElementById('daily-planner-screen'));
+    function open(pushHistory = true) {
+        QuizEngine.showScreen(document.getElementById('daily-planner-screen'), pushHistory);
         ProgressDashboard.updateNavActive('planner');
         selectedDateStr = getTodayStr();
         render();

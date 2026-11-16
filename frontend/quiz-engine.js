@@ -15,19 +15,19 @@ const QuizEngine = {
         quizScreen: document.getElementById('quiz-screen'),
         resultScreen: document.getElementById('result-screen'),
         setupScreens: [document.getElementById('setup-screen'), document.getElementById('pdf-screen'), document.getElementById('home-screen')],
-        
+
         timerText: document.getElementById('timer-text'),
         questionNumberBadge: document.getElementById('question-number-badge'),
         questionText: document.getElementById('question-text'),
         optionsContainer: document.getElementById('options-container'),
         manualInputContainer: document.getElementById('manual-input-container'),
         manualAnswerInput: document.getElementById('manual-answer-input'),
-        
+
         backBtn: document.getElementById('back-btn'),
         nextBtn: document.getElementById('next-btn'),
         markReviewBtn: document.getElementById('mark-review-btn'),
         submitTestBtn: document.getElementById('submit-test-btn'),
-        
+
         exitQuizBtn: document.getElementById('exit-quiz-btn'),
         exitModal: document.getElementById('exit-modal'),
         confirmNoBtn: document.getElementById('confirm-no-btn'),
@@ -59,7 +59,7 @@ const QuizEngine = {
         if (this.els.translateQuestionBtn) {
             this.els.translateQuestionBtn.addEventListener('click', () => this.translateCurrentQuestion());
         }
-        
+
         if (this.els.manualAnswerInput) {
             this.els.manualAnswerInput.addEventListener('input', (e) => {
                 const q = this.state.questions[this.state.currentIndex];
@@ -87,7 +87,7 @@ const QuizEngine = {
                 this.handleNext();
             }
         });
-        
+
         if (this.els.restartBtn) {
             this.els.restartBtn.addEventListener('click', () => this.handleRestart());
         }
@@ -125,7 +125,7 @@ const QuizEngine = {
                 closePalette();
             }
         });
-        
+
         if (this.els.exitQuizBtn) {
             this.els.exitQuizBtn.addEventListener('click', () => {
                 this.els.exitModal.classList.add('active');
@@ -145,7 +145,7 @@ const QuizEngine = {
                 this.showScreen(document.getElementById('home-screen'));
             });
         }
-        
+
         if (this.els.reviewAnswersBtn) {
             this.els.reviewAnswersBtn.addEventListener('click', () => {
                 if (this.els.reviewSection) {
@@ -160,6 +160,7 @@ const QuizEngine = {
     },
 
     startQuiz(questions, durationMinutes, testMeta = null) {
+        this.state.isSubmitting = false;
         this.state.questions = questions.map(q => ({
             ...q,
             status: 'not_visited',
@@ -168,20 +169,20 @@ const QuizEngine = {
             _isHindi: false,
             _hindiTranslation: null
         }));
-        
+
         this.state.currentIndex = 0;
         this.state.questions[0].status = 'not_answered';
 
         this.state.durationSeconds = durationMinutes * 60;
         this.state.testMeta = testMeta;
         this.state.savedTest = null;
-        
+
         if (this.state.timerMode === 'stopwatch') {
             this.state.timeRemaining = 0;
         } else {
             this.state.timeRemaining = this.state.durationSeconds;
         }
-        
+
         if (this.els.nextBtn) this.els.nextBtn.disabled = false;
         if (this.els.submitTestBtn) this.els.submitTestBtn.disabled = false;
         if (this.els.backBtn) this.els.backBtn.disabled = false;
@@ -191,19 +192,43 @@ const QuizEngine = {
         this.renderQuestion();
     },
 
-    showScreen(screenElement) {
+    showScreen(screenElement, pushHistory = true) {
+        if (!screenElement) return;
         const allScreens = document.querySelectorAll('.screen');
         allScreens.forEach(s => s.classList.remove('active'));
         screenElement.classList.add('active');
-        if (screenElement.id === 'home-screen' && typeof refreshHomeStats === 'function') {
-            refreshHomeStats();
+        if (screenElement.id === 'home-screen') {
+            if (typeof refreshHomeStats === 'function') refreshHomeStats();
+            if (typeof playWelcomeTypewriter === 'function') playWelcomeTypewriter();
+        }
+
+        window.scrollTo({ top: 0, behavior: 'instant' });
+
+        if (pushHistory && typeof history !== 'undefined' && history.pushState) {
+            const screenToHash = {
+                'home-screen': '#home',
+                'dashboard-screen': '#analytics',
+                'notebook-screen': '#notebook',
+                'calc-analytics-screen': '#calc-speed',
+                'syllabus-screen': '#syllabus',
+                'daily-planner-screen': '#planner',
+                'setup-screen': '#setup',
+                'pdf-screen': '#pdf-mock',
+                'doc-shuffle-screen': '#doc-shuffle',
+                'quiz-screen': '#quiz',
+                'result-screen': '#result'
+            };
+            const targetHash = screenToHash[screenElement.id] || ('#' + screenElement.id);
+            if (window.location.hash !== targetHash) {
+                history.pushState({ screenId: screenElement.id }, '', targetHash);
+            }
         }
     },
 
     startTimer() {
         this.updateTimerDisplay();
         if (this.state.timerInterval) clearInterval(this.state.timerInterval);
-        
+
         this.state.timerInterval = setInterval(() => {
             if (this.state.timerMode === 'stopwatch') {
                 this.state.timeRemaining++;
@@ -211,7 +236,7 @@ const QuizEngine = {
             } else {
                 this.state.timeRemaining--;
                 this.updateTimerDisplay();
-                
+
                 if (this.state.timeRemaining <= 0) {
                     clearInterval(this.state.timerInterval);
                     this.submitQuiz();
@@ -224,9 +249,9 @@ const QuizEngine = {
         const m = Math.floor(this.state.timeRemaining / 60);
         const s = this.state.timeRemaining % 60;
         const formatted = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-        
+
         this.els.timerText.textContent = formatted;
-        
+
         this.els.timerText.classList.remove('warning', 'danger');
         if (this.state.timerMode === 'countdown') {
             if (this.state.timeRemaining <= 60 && this.state.timeRemaining > 10) {
@@ -283,7 +308,7 @@ const QuizEngine = {
         const q = this.state.questions[this.state.currentIndex];
         const newStatus = q.userAnswer ? 'answered_marked' : 'marked';
         this.leaveCurrentQuestion(newStatus);
-        
+
         if (this.state.currentIndex < this.state.questions.length - 1) {
             this.state.currentIndex++;
             const newQ = this.state.questions[this.state.currentIndex];
@@ -338,7 +363,7 @@ const QuizEngine = {
         }
 
         this.els.backBtn.disabled = this.state.currentIndex === 0;
-        
+
         if (this.state.currentIndex === total - 1) {
             this.els.nextBtn.style.display = 'none';
             if (this.els.submitTestBtn) this.els.submitTestBtn.style.display = 'block';
@@ -346,7 +371,7 @@ const QuizEngine = {
             this.els.nextBtn.style.display = 'block';
             if (this.els.submitTestBtn) this.els.submitTestBtn.style.display = 'none';
         }
-        
+
         this.renderPalette();
         this.renderQuestionRibbon();
     },
@@ -355,7 +380,7 @@ const QuizEngine = {
         if (!this.els.questionRibbon) return;
         const total = this.state.questions.length;
         const currentIdx = this.state.currentIndex;
-        
+
         if (this.els.questionCountBadge) {
             this.els.questionCountBadge.textContent = `${currentIdx + 1} of ${total}`;
         }
@@ -435,23 +460,23 @@ const QuizEngine = {
     selectOption(selectedOpt, event) {
         const q = this.state.questions[this.state.currentIndex];
         q.userAnswer = selectedOpt;
-        
+
         const btns = this.els.optionsContainer.querySelectorAll('.option-btn');
         btns.forEach(btn => {
             btn.classList.remove('selected');
         });
-        
+
         event.currentTarget.classList.add('selected');
-        
+
         this.renderPalette();
         this.renderQuestionRibbon();
     },
 
     renderPalette() {
         if (!this.els.questionPaletteGrid) return;
-        
+
         this.els.questionPaletteGrid.innerHTML = '';
-        
+
         let counts = {
             answered: 0,
             not_answered: 0,
@@ -470,7 +495,7 @@ const QuizEngine = {
                     if (q.status !== 'marked' && q.status !== 'answered_marked') displayStatus = 'not_answered';
                 }
             }
-            
+
             counts[displayStatus] = (counts[displayStatus] || 0) + 1;
 
             const btn = document.createElement('div');
@@ -488,7 +513,7 @@ const QuizEngine = {
             };
             this.els.questionPaletteGrid.appendChild(btn);
         });
-        
+
         const legAns = document.getElementById('leg-ans');
         if (legAns) legAns.textContent = `Answered (${counts.answered})`;
         const legNotAns = document.getElementById('leg-not-ans');
@@ -502,6 +527,9 @@ const QuizEngine = {
     },
 
     async submitQuiz() {
+        if (this.state.isSubmitting) return;
+        this.state.isSubmitting = true;
+
         // Turant disable karo — double click prevent
         if (this.els.submitTestBtn) this.els.submitTestBtn.disabled = true;
         if (this.els.nextBtn) this.els.nextBtn.disabled = true;
@@ -509,14 +537,14 @@ const QuizEngine = {
 
         if (this.state.timerInterval) clearInterval(this.state.timerInterval);
         this.captureQuestionTime(this.state.questions[this.state.currentIndex]);
-        
+
         let score = 0;
         let correctCount = 0;
         let wrongCount = 0;
         let skippedCount = 0;
         let scoredTotal = 0;
         const total = this.state.questions.length;
-        
+
         if (this.els.reviewTableBody) this.els.reviewTableBody.innerHTML = '';
         if (this.els.reviewMobileAccordion) this.els.reviewMobileAccordion.innerHTML = '';
         if (this.els.reviewSection) this.els.reviewSection.style.display = 'none';
@@ -566,27 +594,27 @@ const QuizEngine = {
         } else {
             timeUsed = this.state.durationSeconds - this.state.timeRemaining;
         }
-        
+
         const m = Math.floor(timeUsed / 60);
         const s = timeUsed % 60;
-        let timeString = `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
+        let timeString = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
 
         // Populate new result UI
         if (this.els.scoreText) {
             this.els.scoreText.textContent = `${Math.max(0, score)} / ${total}`;
         }
-        
+
         const statCorrect = document.getElementById('stat-correct');
         const statWrong = document.getElementById('stat-wrong');
         const statAccuracy = document.getElementById('stat-accuracy');
         const statTime = document.getElementById('stat-time');
         const statSkipped = document.getElementById('stat-skipped');
-        
+
         if (statCorrect) statCorrect.textContent = correctCount;
         if (statWrong) statWrong.textContent = wrongCount;
         if (statSkipped) statSkipped.textContent = skippedCount;
         if (statTime) statTime.textContent = timeString;
-        
+
         const accuracy = scoredTotal > 0 ? Math.round((correctCount / scoredTotal) * 100) : 0;
         if (statAccuracy) statAccuracy.textContent = `${accuracy}%`;
 
@@ -594,12 +622,12 @@ const QuizEngine = {
         const statBestStreak = document.getElementById('stat-best-streak');
         if (statStreak) statStreak.textContent = bestStreakThisTest;
         if (statBestStreak) statBestStreak.textContent = allTimeBestStreak;
-        
+
         // Update progress bar
         const barCorrect = document.getElementById('bar-correct');
         const barWrong = document.getElementById('bar-wrong');
         const barSkipped = document.getElementById('bar-skipped');
-        
+
         if (barCorrect && barWrong && barSkipped) {
             // small delay to allow transition to run
             setTimeout(() => {
@@ -620,7 +648,7 @@ const QuizEngine = {
                 score, correctCount, wrongCount, skippedCount,
                 total: totalCount,
                 questions: scoredQuestions
-            }).then(saved => { this.state.savedTest = saved; }).catch(() => {});
+            }).then(saved => { this.state.savedTest = saved; }).catch(() => { });
         }
 
         this.showScreen(this.els.resultScreen);
@@ -677,7 +705,7 @@ const QuizEngine = {
         const resultClass = !isScored ? 'skipped-answer' : (q.isCorrect ? 'correct-answer' : (q.userAnswer ? 'wrong-answer' : 'skipped-answer'));
         const spent = q.timeSpentSeconds || 0;
         const time = `${Math.floor(spent / 60)}m ${spent % 60}s`;
-        
+
         const target = this.getEstimatedTargetTime(q.question);
         let speedBadge = '';
         if (spent <= target) {
@@ -696,7 +724,7 @@ const QuizEngine = {
         const mistakeKey = `${(q.question || '').trim()}|${(q.correctAnswer || '').trim()}`.toLowerCase();
         const currentTags = (typeof ProgressStore !== 'undefined' && ProgressStore.getMistakeTags) ? ProgressStore.getMistakeTags() : {};
         const currentTag = currentTags[mistakeKey] || '';
-        
+
         const showTag = (result === 'Wrong' || result === 'Skipped');
         const tagCellHtml = showTag ? `
             <select class="review-tag-select ${currentTag ? 'tagged-' + currentTag : ''}" 
@@ -742,15 +770,15 @@ const QuizEngine = {
         if (this.els.reviewMobileAccordion) {
             const statusType = !isScored ? 'skipped' : (q.isCorrect ? 'correct' : (q.userAnswer ? 'wrong' : 'skipped'));
             const statusLabel = !isScored ? 'Not Scored' : (q.isCorrect ? 'Correct' : (q.userAnswer ? 'Wrong' : 'Skipped'));
-            
+
             const card = document.createElement('div');
             card.className = `review-acc-card status-${statusType}`;
-            
+
             card.innerHTML = `
                 <div class="review-acc-header" onclick="this.parentElement.classList.toggle('expanded')">
                     <div class="review-acc-header-left">
                         <span class="review-acc-num">Q${number}</span>
-                        <span class="review-acc-question">${this.formatMathText(q.question)}</span>
+                        <div class="review-acc-question">${this.formatMathText(q.question)}</div>
                     </div>
                     <div class="review-acc-header-right" onclick="event.stopPropagation()">
                         ${isScored ? `
@@ -807,6 +835,14 @@ const QuizEngine = {
         });
     },
 
+    stripHtmlForAi(text) {
+        if (!text || typeof text !== 'string') return '';
+        let t = text.replace(/<span class="copy-num">([^<]+)<\/span>\s*<span class="copy-den">([^<]+)<\/span>/gi, '$1/$2');
+        t = t.replace(/<span class="num">([^<]+)<\/span>\s*<span class="den">([^<]+)<\/span>/gi, '$1/$2');
+        t = t.replace(/<[^>]+>/g, ' ');
+        return t.replace(/\s+/g, ' ').trim();
+    },
+
     async showReviewTrickMobile(btn, qTextEnc, ansEnc) {
         const card = btn.closest('.review-acc-card');
         const container = card?.querySelector('.review-acc-trick-content');
@@ -831,14 +867,20 @@ const QuizEngine = {
         `;
 
         try {
-            const res = await fetch('https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick', {
+            const cleanQ = this.stripHtmlForAi(decodeURIComponent(qTextEnc));
+            const cleanAns = this.stripHtmlForAi(decodeURIComponent(ansEnc));
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000/api/ai/shortcut-trick' : 'https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    question: decodeURIComponent(qTextEnc),
-                    correct_answer: decodeURIComponent(ansEnc)
+                    question: cleanQ,
+                    correct_answer: cleanAns
                 })
             });
+            if (!res.ok) throw new Error('API request failed');
+            const data = await res.json();
             const trickTitleClean = (data.trick_title || 'Speed Shortcut Trick').replace(/^⚡\s*/, '');
             const topperShortcutClean = (data.topper_shortcut || '').replace(/^⚡\s*/, '');
             const takeawayClean = (data.key_takeaway || '').replace(/^💡\s*/, '');
@@ -848,7 +890,7 @@ const QuizEngine = {
                 <div class="ai-trick-card">
                     <div class="ai-trick-head">
                         <div class="ai-trick-title"><i class="ph-fill ph-lightning"></i> ${trickTitleClean}</div>
-                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds}s</span>
+                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds || 15}s</span>
                     </div>
                     <div class="ai-trick-body">
                         <div class="ai-step-box">
@@ -894,14 +936,20 @@ const QuizEngine = {
         `;
 
         try {
-            const res = await fetch('https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick', {
+            const cleanQ = this.stripHtmlForAi(decodeURIComponent(qTextEnc));
+            const cleanAns = this.stripHtmlForAi(decodeURIComponent(ansEnc));
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000/api/ai/shortcut-trick' : 'https://mock-test-backend-crqm.onrender.com/api/ai/shortcut-trick';
+            const res = await fetch(apiUrl, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    question: decodeURIComponent(qTextEnc),
-                    correct_answer: decodeURIComponent(ansEnc)
+                    question: cleanQ,
+                    correct_answer: cleanAns
                 })
             });
+            if (!res.ok) throw new Error('API request failed');
+            const data = await res.json();
             const trickTitleClean = (data.trick_title || 'Speed Shortcut Trick').replace(/^⚡\s*/, '');
             const topperShortcutClean = (data.topper_shortcut || '').replace(/^⚡\s*/, '');
             const takeawayClean = (data.key_takeaway || '').replace(/^💡\s*/, '');
@@ -911,7 +959,7 @@ const QuizEngine = {
                 <div class="ai-trick-card">
                     <div class="ai-trick-head">
                         <div class="ai-trick-title"><i class="ph-fill ph-lightning"></i> ${trickTitleClean}</div>
-                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds}s</span>
+                        <span class="ai-target-time-badge"><i class="ph-bold ph-timer"></i> &le; ${data.target_time_seconds || 15}s</span>
                     </div>
                     <div class="ai-trick-body">
                         <div class="ai-step-box">
@@ -931,13 +979,8 @@ const QuizEngine = {
                 </div>
             `;
             cell.innerHTML = trickHtml;
-        } catch (e) {
-            cell.innerHTML = `
-                <div class="ai-trick-card error">
-                    <div class="ai-trick-title">⚡ Smart Mental Math Strategy</div>
-                    <p>Check the unit digits and use options elimination to reach the answer in under 15 seconds without manual calculation.</p>
-                </div>
-            `;
+        } catch (err) {
+            cell.innerHTML = `<div class="error-message active">Could not generate AI trick. Please try again.</div>`;
         }
     },
 
@@ -959,8 +1002,18 @@ const QuizEngine = {
     },
 
     formatMathText(text) {
-        if (typeof text !== 'string') return text;
-        return text.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="num">$1</span><span class="den">$2</span></span>');
+        if (!text || typeof text !== 'string') return text || '';
+        let cleaned = text;
+        if (cleaned.includes('&lt;') && cleaned.includes('&gt;')) {
+            const txt = document.createElement('textarea');
+            txt.innerHTML = cleaned;
+            cleaned = txt.value;
+        }
+        if (cleaned.includes('copy-math-container') || cleaned.includes('copy-fraction') || cleaned.includes('copy-big-fraction') || cleaned.includes('<span class="fraction">')) {
+            return cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+                .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
+        }
+        return cleaned.replace(/(\d+)\/(\d+)/g, '<span class="fraction"><span class="num">$1</span><span class="den">$2</span></span>');
     },
 
     updateTranslateButton(q) {

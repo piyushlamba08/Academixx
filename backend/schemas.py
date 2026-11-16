@@ -56,6 +56,8 @@ class TestQuestionIn(BaseModel):
 
 
 class TestIn(BaseModel):
+    id: Optional[str] = None
+    completedAt: Optional[str] = None
     topic: Optional[str] = None
     sourceName: Optional[str] = None
     durationSeconds: int = 0
@@ -104,16 +106,22 @@ class MistakeOut(BaseModel):
     active: bool
 
 
-class TopicsOut(BaseModel):
-    topics: List[str]
-
-
 class StreakOut(BaseModel):
     bestStreak: int
 
 
 class StreakIn(BaseModel):
     candidate: int
+
+
+class SyllabusOut(BaseModel):
+    data: dict = {}
+    updatedAt: Optional[str] = None
+
+
+class SyllabusIn(BaseModel):
+    data: dict
+
 
 
 class ShortcutRequest(BaseModel):

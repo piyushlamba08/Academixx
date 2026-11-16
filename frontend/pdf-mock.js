@@ -119,7 +119,9 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('file', selectedFile);
 
         try {
-            const response = await fetch('https://mock-test-backend-crqm.onrender.com/api/process-pdf', {
+            const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+            const apiUrl = isLocal ? 'http://localhost:8000/api/process-pdf' : 'https://mock-test-backend-crqm.onrender.com/api/process-pdf';
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 body: formData
             });

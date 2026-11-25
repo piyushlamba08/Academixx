@@ -89,6 +89,30 @@ const ProgressStore = (() => {
         return cache.tests || [];
     }
 
+    async function deleteTest(id) {
+        if (!id) return false;
+        invalidateCache();
+
+        try {
+            let res = await fetch(`${API_BASE}/tests/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            if (!res.ok) {
+                res = await fetch(`${API_BASE}/tests/${encodeURIComponent(id)}`, {
+                    method: 'DELETE'
+                });
+            }
+            invalidateCache();
+            return res.ok;
+        } catch (e) {
+            console.warn('[ProgressStore] Failed to delete test from DB', e);
+            invalidateCache();
+            return false;
+        }
+    }
+
     const MISTAKE_TAGS_KEY = 'academix_mistake_tags';
 
     function getMistakeTags() {
@@ -275,6 +299,7 @@ const ProgressStore = (() => {
     return { 
         saveTest, 
         getTests, 
+        deleteTest,
         getMistakes, 
         deleteMistake,
         getTopics, 

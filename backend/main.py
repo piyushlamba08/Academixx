@@ -26,7 +26,7 @@ from schemas import (
     PracticeRequest, PracticeResponse,
     TestIn, TestOut, TestQuestionOut, MistakeOut, StreakOut, StreakIn,
     ShortcutRequest, ShortcutResponse, TranslateRequest, TranslateResponse,
-    SyllabusIn, SyllabusOut, DeleteMistakeIn,
+    SyllabusIn, SyllabusOut, DeleteMistakeIn, DeleteTestIn,
 )
 import practice_generator
 import models as db_models
@@ -377,6 +377,26 @@ def save_test(test_in: TestIn, db: Session = Depends(get_db)):
 def get_tests(db: Session = Depends(get_db)):
     tests = db.query(db_models.Test).order_by(db_models.Test.completed_at.desc()).all()
     return [_serialize_test(t) for t in tests]
+
+
+@app.post("/api/progress/tests/delete")
+@app.delete("/api/progress/tests/{test_id}")
+@app.delete("/api/progress/tests")
+def delete_test(test_id: Optional[str] = None, payload: Optional[DeleteTestIn] = None, id: Optional[str] = None, db: Session = Depends(get_db)):
+    """
+    Permanently delete an individual test log (and its child questions) from the database.
+    """
+    target_id = test_id or (payload.id if payload else None) or id
+    if not target_id:
+        raise HTTPException(status_code=400, detail="Test ID is required")
+
+    test_row = db.query(db_models.Test).filter(db_models.Test.id == target_id).first()
+    if test_row:
+        db.delete(test_row)
+        db.commit()
+        return {"status": "ok", "message": "Test log deleted successfully", "id": target_id}
+
+    return {"status": "ok", "message": "Test log already removed", "id": target_id}
 
 
 @app.get("/api/progress/mistakes", response_model=List[MistakeOut])

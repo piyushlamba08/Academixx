@@ -213,10 +213,32 @@ const ProgressDashboard = (() => {
                         <div class="history-score-val"><b>${correct}</b><span class="history-score-total">/${totalQ}</span></div>
                         <span class="history-acc-pill ${accClass}">${acc}%</span>
                     </div>
+                    <button type="button" class="history-delete-btn" title="Delete test log permanently" onclick="event.stopPropagation(); ProgressDashboard.deleteSingleTest('${t.id}')">
+                        <i class="ph-bold ph-trash"></i>
+                    </button>
                     <i class="ph-bold ph-caret-right history-arrow"></i>
                 </div>
             </div>`;
         }).join('');
+    }
+
+    async function deleteSingleTest(id) {
+        if (!id) return;
+        if (!confirm('Are you sure you want to delete this test log? It will be permanently removed from the database and analytics.')) {
+            return;
+        }
+
+        try {
+            if (typeof ProgressStore !== 'undefined' && ProgressStore.deleteTest) {
+                await ProgressStore.deleteTest(id);
+            }
+            await renderDashboard();
+            if (typeof refreshHomeStats === 'function') {
+                await refreshHomeStats();
+            }
+        } catch (err) {
+            console.error('Failed to delete test log:', err);
+        }
     }
 
     async function openTest(id) {
@@ -777,6 +799,7 @@ const ProgressDashboard = (() => {
     return {
         open,
         openTest,
+        deleteSingleTest,
         openNotebook,
         renderDashboard,
         renderNotebook,

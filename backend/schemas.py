@@ -127,6 +127,10 @@ class DeleteMistakeIn(BaseModel):
     key: str
 
 
+class DeleteTestIn(BaseModel):
+    id: str
+
+
 
 class ShortcutRequest(BaseModel):
     question: str

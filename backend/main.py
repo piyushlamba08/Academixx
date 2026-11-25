@@ -27,6 +27,7 @@ from schemas import (
     TestIn, TestOut, TestQuestionOut, MistakeOut, StreakOut, StreakIn,
     ShortcutRequest, ShortcutResponse, TranslateRequest, TranslateResponse,
     SyllabusIn, SyllabusOut, DeleteMistakeIn, DeleteTestIn,
+    PlannerIn, PlannerOut,
 )
 import practice_generator
 import models as db_models
@@ -531,6 +532,36 @@ def save_syllabus(syllabus_in: SyllabusIn, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(record)
     return SyllabusOut(data=syllabus_in.data, updatedAt=record.updated_at)
+
+
+# ── Daily Study Planner Endpoints (Cross-Device Cloud Sync) ──
+
+@app.get("/api/progress/planner", response_model=PlannerOut)
+def get_planner(db: Session = Depends(get_db)):
+    record = db.query(db_models.PlannerRecord).filter(db_models.PlannerRecord.id == "default").first()
+    if not record or not record.data:
+        return PlannerOut(data={}, updatedAt=None)
+    try:
+        parsed = json.loads(record.data)
+    except Exception:
+        parsed = {}
+    return PlannerOut(data=parsed, updatedAt=record.updated_at)
+
+
+@app.post("/api/progress/planner", response_model=PlannerOut)
+def save_planner(planner_in: PlannerIn, db: Session = Depends(get_db)):
+    record = db.query(db_models.PlannerRecord).filter(db_models.PlannerRecord.id == "default").first()
+    now_str = datetime.now(timezone.utc).isoformat()
+    json_data = json.dumps(planner_in.data)
+    if not record:
+        record = db_models.PlannerRecord(id="default", data=json_data, updated_at=now_str)
+        db.add(record)
+    else:
+        record.data = json_data
+        record.updated_at = now_str
+    db.commit()
+    db.refresh(record)
+    return PlannerOut(data=planner_in.data, updatedAt=record.updated_at)
 
 
 # ── AI Topper Shortcut Trick ──

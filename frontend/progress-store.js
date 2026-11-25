@@ -266,6 +266,33 @@ const ProgressStore = (() => {
         }
     }
 
+    async function getPlanner() {
+        try {
+            const res = await fetch(`${API_BASE}/planner`);
+            if (!res.ok) throw new Error('Failed to fetch remote planner');
+            const json = await res.json();
+            return json.data || {};
+        } catch (e) {
+            console.warn('[ProgressStore] Could not fetch remote planner', e);
+            return null;
+        }
+    }
+
+    async function savePlanner(plannerData) {
+        try {
+            const res = await fetch(`${API_BASE}/planner`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: plannerData })
+            });
+            if (!res.ok) throw new Error('Failed to save remote planner');
+            return await res.json();
+        } catch (e) {
+            console.warn('[ProgressStore] Could not save remote planner', e);
+            return null;
+        }
+    }
+
     async function wipeAllData() {
         // Clear any legacy keys from localStorage to prevent lingering stale data
         try {
@@ -310,6 +337,8 @@ const ProgressStore = (() => {
         setMistakeTag,
         getSyllabus,
         saveSyllabus,
+        getPlanner,
+        savePlanner,
         wipeAllData
     };
 })();

@@ -131,6 +131,15 @@ class DeleteTestIn(BaseModel):
     id: str
 
 
+class PlannerOut(BaseModel):
+    data: dict = {}
+    updatedAt: Optional[str] = None
+
+
+class PlannerIn(BaseModel):
+    data: dict
+
+
 
 class ShortcutRequest(BaseModel):
     question: str

@@ -76,3 +76,11 @@ class SyllabusRecord(Base):
     data = Column(Text, nullable=False, default="{}")
     updated_at = Column(String, nullable=False)
 
+
+class PlannerRecord(Base):
+    __tablename__ = "planner_progress"
+
+    id = Column(String, primary_key=True, default="default")
+    data = Column(Text, nullable=False, default="{}")
+    updated_at = Column(String, nullable=False)
+

@@ -7,6 +7,9 @@ const DailyPlanner = (() => {
     const STORAGE_KEY = 'academix_daily_planner_v1';
     let selectedDateStr = getTodayStr();
     let currentFilter = 'all'; // 'all' | 'pending' | 'completed'
+    let memoryData = null;
+    let remoteSyncTimeout = null;
+    let isSyncing = false;
 
     /* ── Date Helpers ── */
     function getTodayStr() {
@@ -54,31 +57,73 @@ const DailyPlanner = (() => {
         return d.getDate();
     }
 
-    /* ── Data Persistence ── */
+    /* ── Data Persistence (DB-first with local cache) ── */
     function loadData() {
+        if (memoryData) return memoryData;
         try {
             const raw = localStorage.getItem(STORAGE_KEY);
             if (!raw) {
-                return {
-                    settings: { targetPct: 90 },
-                    days: {}
-                };
+                memoryData = { settings: { targetPct: 90 }, days: {} };
+                return memoryData;
             }
             const data = JSON.parse(raw);
             if (!data.settings) data.settings = { targetPct: 90 };
             if (!data.days) data.days = {};
-            return data;
+            memoryData = data;
+            return memoryData;
         } catch (e) {
             console.error('[DailyPlanner] Error loading data:', e);
-            return { settings: { targetPct: 90 }, days: {} };
+            memoryData = { settings: { targetPct: 90 }, days: {} };
+            return memoryData;
         }
     }
 
     function saveData(data) {
+        memoryData = data;
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         } catch (e) {
             console.error('[DailyPlanner] Error saving data:', e);
+        }
+
+        if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout);
+        remoteSyncTimeout = setTimeout(async () => {
+            if (typeof ProgressStore !== 'undefined' && ProgressStore.savePlanner) {
+                await ProgressStore.savePlanner(data);
+            }
+        }, 300);
+    }
+
+    async function syncFromRemote() {
+        if (isSyncing) return;
+        if (typeof ProgressStore === 'undefined' || !ProgressStore.getPlanner) return;
+        isSyncing = true;
+        try {
+            const remote = await ProgressStore.getPlanner();
+            if (remote && typeof remote === 'object') {
+                const hasRemoteDays = remote.days && Object.keys(remote.days).length > 0;
+                if (hasRemoteDays || (remote.settings && Object.keys(remote.settings).length > 0)) {
+                    const normalized = {
+                        settings: remote.settings || { targetPct: 90 },
+                        days: remote.days || {}
+                    };
+                    memoryData = normalized;
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
+                    } catch {}
+                    render();
+                    updateHomeWidget();
+                } else {
+                    const local = loadData();
+                    if (local.days && Object.keys(local.days).length > 0) {
+                        await ProgressStore.savePlanner(local);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[DailyPlanner] Remote sync error:', e);
+        } finally {
+            isSyncing = false;
         }
     }
 
@@ -611,6 +656,7 @@ const DailyPlanner = (() => {
         ProgressDashboard.updateNavActive('planner');
         selectedDateStr = getTodayStr();
         render();
+        syncFromRemote();
     }
 
     function init() {
@@ -634,6 +680,14 @@ const DailyPlanner = (() => {
         }
 
         updateHomeWidget();
+        syncFromRemote();
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') syncFromRemote();
+        });
+        window.addEventListener('focus', () => {
+            syncFromRemote();
+        });
     }
 
     // Expose Public API
@@ -641,6 +695,7 @@ const DailyPlanner = (() => {
         open,
         init,
         render,
+        syncFromRemote,
         addTask,
         toggleTask,
         deleteTask,

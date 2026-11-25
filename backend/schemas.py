@@ -123,6 +123,10 @@ class SyllabusIn(BaseModel):
     data: dict
 
 
+class DeleteMistakeIn(BaseModel):
+    key: str
+
+
 
 class ShortcutRequest(BaseModel):
     question: str

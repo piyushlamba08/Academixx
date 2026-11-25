@@ -12,7 +12,7 @@ import threading
 import time
 import requests
 from datetime import datetime, timezone
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,7 +26,7 @@ from schemas import (
     PracticeRequest, PracticeResponse,
     TestIn, TestOut, TestQuestionOut, MistakeOut, StreakOut, StreakIn,
     ShortcutRequest, ShortcutResponse, TranslateRequest, TranslateResponse,
-    SyllabusIn, SyllabusOut,
+    SyllabusIn, SyllabusOut, DeleteMistakeIn,
 )
 import practice_generator
 import models as db_models
@@ -411,6 +411,29 @@ def get_mistakes(topic: str = "all", activeOnly: str = "true", db: Session = Dep
         lastResult=m.last_result,
         active=m.active
     ) for m in clean_mistakes]
+
+
+@app.post("/api/progress/mistakes/delete")
+@app.delete("/api/progress/mistakes")
+def delete_mistake(payload: Optional[DeleteMistakeIn] = None, key: Optional[str] = None, db: Session = Depends(get_db)):
+    """
+    Permanently delete an individual mistake entry from the database.
+    """
+    target_key = (payload.key if payload else None) or key
+    if not target_key:
+        raise HTTPException(status_code=400, detail="Mistake key is required")
+
+    target_key = target_key.strip().lower()
+    mistake = db.query(db_models.Mistake).filter(db_models.Mistake.key.ilike(target_key)).first()
+    if not mistake:
+        mistake = db.query(db_models.Mistake).filter(db_models.Mistake.key == target_key).first()
+
+    if mistake:
+        db.delete(mistake)
+        db.commit()
+        return {"status": "ok", "message": "Mistake deleted successfully", "key": target_key}
+
+    return {"status": "ok", "message": "Mistake already removed", "key": target_key}
 
 
 @app.get("/api/progress/topics", response_model=List[str])

@@ -137,6 +137,38 @@ const ProgressStore = (() => {
         }
     }
 
+    async function deleteMistake(key) {
+        if (!key) return false;
+        invalidateCache();
+
+        try {
+            const tags = getMistakeTags();
+            if (tags[key]) {
+                delete tags[key];
+                localStorage.setItem(MISTAKE_TAGS_KEY, JSON.stringify(tags));
+            }
+        } catch {}
+
+        try {
+            let res = await fetch(`${API_BASE}/mistakes/delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ key })
+            });
+            if (!res.ok) {
+                res = await fetch(`${API_BASE}/mistakes?key=${encodeURIComponent(key)}`, {
+                    method: 'DELETE'
+                });
+            }
+            invalidateCache();
+            return res.ok;
+        } catch (e) {
+            console.warn('[ProgressStore] Failed to delete mistake from DB', e);
+            invalidateCache();
+            return false;
+        }
+    }
+
     async function getTopics(forceRefresh = false) {
         if (!forceRefresh && cache.topics) return cache.topics;
         try {
@@ -244,6 +276,7 @@ const ProgressStore = (() => {
         saveTest, 
         getTests, 
         getMistakes, 
+        deleteMistake,
         getTopics, 
         getBestStreak, 
         updateBestStreak, 

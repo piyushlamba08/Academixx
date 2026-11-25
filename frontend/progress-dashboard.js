@@ -600,6 +600,9 @@ const ProgressDashboard = (() => {
                         <button class="practice-pill-btn" onclick="ProgressDashboard.practiceSingleMistake('${encodeURIComponent(q.key)}')">
                             <i class="ph-bold ph-arrows-clockwise"></i> Practice
                         </button>
+                        <button class="mistake-delete-btn" title="Delete entry permanently" onclick="ProgressDashboard.deleteSingleMistake('${encodeURIComponent(q.key)}')">
+                            <i class="ph-bold ph-trash"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="mistake-question-content">
@@ -714,6 +717,28 @@ const ProgressDashboard = (() => {
         });
     }
 
+    async function deleteSingleMistake(keyEnc) {
+        const key = decodeURIComponent(keyEnc);
+        if (!key) return;
+
+        if (!confirm('Are you sure you want to delete this question from your Mistake Notebook? It will be permanently removed from the database.')) {
+            return;
+        }
+
+        try {
+            selectedMistakeKeys.delete(key);
+            if (typeof ProgressStore !== 'undefined' && ProgressStore.deleteMistake) {
+                await ProgressStore.deleteMistake(key);
+            }
+            await renderNotebook();
+            if (typeof refreshHomeStats === 'function') {
+                await refreshHomeStats();
+            }
+        } catch (err) {
+            console.error('Failed to delete mistake:', err);
+        }
+    }
+
     async function startRetest() {
         let questions = currentVisibleMistakes;
         if (!questions.length) return;
@@ -756,6 +781,7 @@ const ProgressDashboard = (() => {
         renderDashboard,
         renderNotebook,
         practiceSingleMistake,
+        deleteSingleMistake,
         showAiTrick,
         updateNavActive,
         toggleMistakeSelect,

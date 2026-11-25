@@ -6106,6 +6106,33 @@ body.dark-theme .ca-bar-track {
     color: var(--primary);
 }
 
+.syllabus-sync-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    white-space: nowrap;
+    transition: all 0.2s ease;
+}
+
+.syllabus-sync-badge.syncing {
+    background: rgba(99, 102, 241, 0.12);
+    color: var(--primary);
+    border-color: rgba(99, 102, 241, 0.25);
+}
+
+.syllabus-sync-badge.offline {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
 .syllabus-meter-track {
     width: 100%;
     height: 8px;

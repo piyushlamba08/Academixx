@@ -1,6 +1,7 @@
 /**
  * SyllabusManager — Complete Subject Syllabus & Selection Table Revision Tracker
- * Supports checklist marking, round tracking (R1-R8), progress percentage, and persistent saving in localStorage.
+ * Supports checklist marking, round tracking (R1-R5, T1-T5, Concept), progress percentage,
+ * and seamless cross-browser real-time cloud synchronization via backend database.
  */
 const SyllabusManager = (() => {
     const STORAGE_KEY = 'academix_syllabus_progress_v1';
@@ -9,79 +10,100 @@ const SyllabusManager = (() => {
     let searchQuery = '';
 
     let remoteSyncTimeout = null;
+    let isSyncing = false;
 
-    // Load progress object from localStorage: { [subjectId]: { [topicKey]: { done: boolean, r1: boolean, r2: boolean, ... } } }
+    // In-memory cache for snappy UI transitions
+    let memoryProgress = null;
+
     function loadProgress() {
+        if (memoryProgress) return memoryProgress;
         try {
             const data = localStorage.getItem(STORAGE_KEY);
-            return data ? JSON.parse(data) : {};
+            memoryProgress = data ? JSON.parse(data) : {};
         } catch (e) {
             console.error('Failed to load syllabus progress', e);
-            return {};
+            memoryProgress = {};
+        }
+        return memoryProgress;
+    }
+
+    function updateSyncBadge(status, label = '') {
+        const badge = document.getElementById('syllabus-sync-badge');
+        if (!badge) return;
+        if (status === 'syncing') {
+            badge.className = 'syllabus-sync-badge syncing';
+            badge.innerHTML = `<i class="ph-bold ph-arrows-clockwise spin"></i> <span>Syncing...</span>`;
+        } else if (status === 'synced') {
+            badge.className = 'syllabus-sync-badge';
+            badge.innerHTML = `<i class="ph-bold ph-cloud-check"></i> <span>Cloud Synced</span>`;
+        } else if (status === 'offline') {
+            badge.className = 'syllabus-sync-badge offline';
+            badge.innerHTML = `<i class="ph-bold ph-cloud-slash"></i> <span>${label || 'Local Cache'}</span>`;
         }
     }
 
     function saveProgress(progress) {
+        memoryProgress = progress;
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
         } catch (e) {
-            console.error('Failed to save syllabus progress', e);
+            console.error('Failed to save syllabus progress to localStorage', e);
         }
 
-        // Automatic cross-device cloud sync to SQL database
+        // Cross-device cloud sync to SQL database (debounced 300ms)
         if (remoteSyncTimeout) clearTimeout(remoteSyncTimeout);
+        updateSyncBadge('syncing');
         remoteSyncTimeout = setTimeout(async () => {
             if (typeof ProgressStore !== 'undefined' && ProgressStore.saveSyllabus) {
-                await ProgressStore.saveSyllabus(progress);
+                const res = await ProgressStore.saveSyllabus(progress);
+                if (res) {
+                    updateSyncBadge('synced');
+                } else {
+                    updateSyncBadge('offline', 'Saved Locally');
+                }
+            } else {
+                updateSyncBadge('offline', 'Saved Locally');
             }
-        }, 500);
+        }, 300);
     }
 
     async function syncFromRemote() {
+        if (isSyncing) return;
         if (typeof ProgressStore === 'undefined' || !ProgressStore.getSyllabus) return;
+        isSyncing = true;
+        updateSyncBadge('syncing');
         try {
             const remoteData = await ProgressStore.getSyllabus();
-            if (!remoteData || typeof remoteData !== 'object' || Object.keys(remoteData).length === 0) {
-                // If cloud database is empty, seed it with existing local progress
-                const local = loadProgress();
-                if (Object.keys(local).length > 0) {
-                    ProgressStore.saveSyllabus(local);
-                }
-                return;
-            }
-
-            // Union merge local and cloud database so no device loses progress
-            const local = loadProgress();
-            const merged = { ...remoteData };
-
-            Object.keys(local).forEach(subj => {
-                if (!merged[subj]) merged[subj] = {};
-                Object.keys(local[subj] || {}).forEach(k => {
-                    if (!merged[subj][k]) {
-                        merged[subj][k] = local[subj][k];
+            if (remoteData && typeof remoteData === 'object') {
+                const remoteKeys = Object.keys(remoteData);
+                if (remoteKeys.length > 0) {
+                    // Database is single source of truth across all browsers
+                    memoryProgress = remoteData;
+                    try {
+                        localStorage.setItem(STORAGE_KEY, JSON.stringify(remoteData));
+                    } catch {}
+                    updateSyncBadge('synced');
+                    render();
+                } else {
+                    // Database is empty (initial state), check if local has existing data to seed DB
+                    const local = loadProgress();
+                    if (Object.keys(local).length > 0) {
+                        const saved = await ProgressStore.saveSyllabus(local);
+                        if (saved) updateSyncBadge('synced');
+                        else updateSyncBadge('offline', 'Local Cache');
                     } else {
-                        merged[subj][k] = {
-                            ...merged[subj][k],
-                            ...local[subj][k],
-                            done: !!(merged[subj][k].done || local[subj][k].done),
-                            r1: !!(merged[subj][k].r1 || local[subj][k].r1),
-                            r2: !!(merged[subj][k].r2 || local[subj][k].r2),
-                            r3: !!(merged[subj][k].r3 || local[subj][k].r3),
-                            r4: !!(merged[subj][k].r4 || local[subj][k].r4),
-                            r5: !!(merged[subj][k].r5 || local[subj][k].r5)
-                        };
+                        updateSyncBadge('synced');
                     }
-                });
-            });
-
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
-            // If local had data that wasn't in remote, save merged back to cloud database
-            if (JSON.stringify(merged) !== JSON.stringify(remoteData)) {
-                await ProgressStore.saveSyllabus(merged);
+                }
+            } else {
+                // Remote returned null (e.g. backend 404 or network offline)
+                updateSyncBadge('offline', 'Local Cache');
             }
-            render();
         } catch (e) {
             console.warn('[SyllabusManager] Remote syllabus sync error', e);
+            updateSyncBadge('offline', 'Offline');
+        } finally {
+            isSyncing = false;
         }
     }
 
@@ -399,7 +421,7 @@ const SyllabusManager = (() => {
                                     if (canAddMore) {
                                         actionContent += `
                                             <button type="button" class="syllabus-add-round-btn" title="Add R${topicRounds + 1} & T${topicRounds + 1}" onclick="SyllabusManager.addNextRound('${currentSubjectId}', '${escapedTopic}')">
-                                                <i class="ph-bold ph-plus"></i>
+                                                 <i class="ph-bold ph-plus"></i>
                                             </button>
                                         `;
                                     } else {
@@ -539,6 +561,16 @@ const SyllabusManager = (() => {
 
     if (typeof document !== 'undefined') {
         document.addEventListener('DOMContentLoaded', () => {
+            syncFromRemote();
+        });
+
+        // Real-time sync across multiple browsers/tabs on focus & visibility
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                syncFromRemote();
+            }
+        });
+        window.addEventListener('focus', () => {
             syncFromRemote();
         });
     }

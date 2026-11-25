@@ -783,20 +783,8 @@ const QuizEngine = {
         const spent = q.timeSpentSeconds || 0;
         const time = `${Math.floor(spent / 60)}m ${spent % 60}s`;
 
-        const target = this.getEstimatedTargetTime(q.question);
-        let speedBadge = '';
-        if (spent <= target) {
-            speedBadge = `<span class="speed-pill fast"><i class="ph-fill ph-lightning"></i> Fast (${spent}s / &le;${target}s)</span>`;
-        } else if (spent <= target * 1.5) {
-            speedBadge = `<span class="speed-pill normal"><i class="ph-bold ph-check"></i> Optimal (${spent}s / &le;${target}s)</span>`;
-        } else {
-            speedBadge = `<span class="speed-pill slow"><i class="ph-bold ph-warning"></i> Slow (${spent}s / &le;${target}s)</span>`;
-        }
-
         const correctAnswerDisplay = isScored ? this.formatMathText(q.correctAnswer) : '—';
-        const trickBtn = isScored
-            ? `<button class="review-ai-trick-btn" onclick="QuizEngine.showReviewTrick(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')"><i class="ph-fill ph-lightning"></i> Trick</button>`
-            : '<span class="skipped-answer">—</span>';
+        const selectedAnswerDisplay = q.userAnswer ? this.formatMathText(q.userAnswer) : '<span class="skipped-answer">—</span>';
 
         const mistakeKey = `${(q.question || '').trim()}|${(q.correctAnswer || '').trim()}`.toLowerCase();
         const currentTags = (typeof ProgressStore !== 'undefined' && ProgressStore.getMistakeTags) ? ProgressStore.getMistakeTags() : {};
@@ -821,27 +809,20 @@ const QuizEngine = {
             `<span class="${resultClass}">${result}</span>`,
             tagCellHtml,
             time,
-            speedBadge,
             correctAnswerDisplay,
-            trickBtn
+            selectedAnswerDisplay
         ];
 
         cells.forEach((value, index) => {
             const td = document.createElement('td');
             td.innerHTML = value;
             if (index === 1) td.className = resultClass;
-            if (index === 5) td.className = 'correct-answer';
+            if (index === 4) td.className = 'correct-answer';
+            if (index === 5) td.className = q.userAnswer ? (q.isCorrect ? 'correct-answer' : 'wrong-answer') : 'skipped-answer';
             tr.appendChild(td);
         });
 
         this.els.reviewTableBody.appendChild(tr);
-
-        // Expandable Row for AI Shortcut
-        const trickTr = document.createElement('tr');
-        trickTr.className = 'review-trick-row';
-        trickTr.style.display = 'none';
-        trickTr.innerHTML = `<td colspan="7" class="review-trick-cell"></td>`;
-        this.els.reviewTableBody.appendChild(trickTr);
 
         // Mobile Accordion Dropdown Card
         if (this.els.reviewMobileAccordion) {
@@ -858,10 +839,6 @@ const QuizEngine = {
                         <div class="review-acc-question">${this.formatMathText(q.question)}</div>
                     </div>
                     <div class="review-acc-header-right" onclick="event.stopPropagation()">
-                        ${isScored ? `
-                        <button type="button" class="ai-trick-btn review-header-trick-btn" onclick="QuizEngine.showReviewTrickMobile(this, '${encodeURIComponent(q.question)}', '${encodeURIComponent(q.correctAnswer)}')">
-                            <i class="ph-fill ph-lightning"></i> Trick
-                        </button>` : ''}
                         <span class="review-acc-badge badge-${statusType}">${statusLabel}</span>
                         <i class="ph-bold ph-caret-down review-acc-arrow" onclick="this.closest('.review-acc-card').classList.toggle('expanded')"></i>
                     </div>
@@ -869,8 +846,8 @@ const QuizEngine = {
                 <div class="review-acc-body">
                     <div class="review-acc-details-grid">
                         <div class="review-acc-detail-item">
-                            <span class="acc-detail-label">Your Answer</span>
-                            <span class="acc-detail-val ${q.userAnswer ? (q.isCorrect ? 'text-green' : 'text-red') : 'text-grey'}">${q.userAnswer ? this.formatMathText(q.userAnswer) : 'Skipped'}</span>
+                            <span class="acc-detail-label">Selected Answer</span>
+                            <span class="acc-detail-val ${q.userAnswer ? (q.isCorrect ? 'text-green' : 'text-red') : 'text-grey'}">${q.userAnswer ? this.formatMathText(q.userAnswer) : '—'}</span>
                         </div>
                         <div class="review-acc-detail-item">
                             <span class="acc-detail-label">Correct Answer</span>
@@ -880,17 +857,12 @@ const QuizEngine = {
                             <span class="acc-detail-label">Time Spent</span>
                             <span class="acc-detail-val">${time}</span>
                         </div>
-                        <div class="review-acc-detail-item">
-                            <span class="acc-detail-label">Speed Rating</span>
-                            <div class="acc-speed-wrap">${speedBadge}</div>
-                        </div>
                         ${showTag ? `
                         <div class="review-acc-detail-item review-acc-tag-item">
-                            <span class="acc-detail-label">Mistake Tag</span>
+                            <span class="acc-detail-label">Mistake</span>
                             <div class="acc-tag-wrap">${tagCellHtml}</div>
                         </div>` : ''}
                     </div>
-                    <div class="review-acc-trick-content" style="display: none;"></div>
                 </div>
             `;
             this.els.reviewMobileAccordion.appendChild(card);
